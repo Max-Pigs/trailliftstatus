@@ -18,61 +18,70 @@
     <div id="trail-status" class="trail-list">Loading...</div>
 
     <script>
-   document.addEventListener("DOMContentLoaded", async function () {
-    const apiUrl = "https://snoq.max-4f5.workers.dev"; // Replace with your actual Cloudflare Worker URL
-
+   document.addEventListener("DOMContentLoaded", 
+                            async function fetchTrailStatus() {
     try {
-        const response = await fetch(apiUrl);
+        let response = await fetch("https://snoq.max-4f5.workers.dev/");
+        
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
 
-        const data = await response.json();
-        displayTrailStatus(data);
+        let data = await response.json();
+        
+        // ✅ Debug: Log API response structure
+        console.log("API Response:", data);
+
+        if (!data || !data.facilities || !data.facilities.areas || !data.facilities.areas.area) {
+            throw new Error("Invalid API response: No trail data found.");
+        }
+
+        let trails = [];
+        data.facilities.areas.area.forEach(area => {
+            if (area.trails && area.trails.trail) {
+                area.trails.trail.forEach(trail => {
+                    trails.push({
+                        name: trail.name,
+                        status: trail.status,
+                        groomed: trail.groomed || false // Default to false if missing
+                    });
+                });
+            }
+        });
+
+        console.log("Extracted Trails:", trails); // Debug log for extracted trails
+
+        displayTrailStatus(trails);
     } catch (error) {
         console.error("Error fetching trail status:", error);
-        document.getElementById("trail-status").innerHTML = "<p>Failed to load trail status.</p>";
+        document.getElementById("trailStatus").innerHTML = `<p>Error loading data. Please try again.</p>`;
     }
-});
+}
 
-function displayTrailStatus(data) {
-    const trailContainer = document.getElementById("trail-status");
-    trailContainer.innerHTML = "<h2>Trail & Lift Status</h2>";
-
-    if (!data || !data.facilities || !data.facilities.areas) {
-        trailContainer.innerHTML += "<p>No data available.</p>";
+function displayTrailStatus(trails) {
+    if (!trails || trails.length === 0) {
+        console.error("No trail data available.");
+        document.getElementById("trailStatus").innerHTML = "<p>No trail data available.</p>";
         return;
     }
 
-    data.facilities.areas.area.forEach((area) => {
-        const areaTitle = document.createElement("h3");
-        areaTitle.textContent = area.name;
-        trailContainer.appendChild(areaTitle);
-
-        // Lifts
-        if (area.lifts && area.lifts.lift.length > 0) {
-            const liftList = document.createElement("ul");
-            area.lifts.lift.forEach((lift) => {
-                const liftItem = document.createElement("li");
-                liftItem.innerHTML = `<strong>${lift.name}</strong>: ${lift.status}`;
-                liftList.appendChild(liftItem);
-            });
-            trailContainer.appendChild(liftList);
+    let trailHTML = "<ul>";
+    trails.forEach(trail => {
+        if (!trail || !trail.name) {
+            console.warn("Skipping invalid trail entry:", trail);
+            return;
         }
 
-        // Trails
-        if (area.trails && area.trails.trail.length > 0) {
-            const trailList = document.createElement("ul");
-            area.trails.trail.forEach((trail) => {
-                const trailItem = document.createElement("li");
-                const groomed = trail.groomed ? "✅ Groomed" : "❌ Not Groomed";
-                trailItem.innerHTML = `<strong>${trail.name}</strong>: ${trail.status} (${groomed})`;
-                trailList.appendChild(trailItem);
-            });
-            trailContainer.appendChild(trailList);
-        }
+        let groomedText = trail.groomed ? " (Groomed)" : "";
+        trailHTML += `<li>${trail.name} - ${trail.status} ${groomedText}</li>`;
     });
+    trailHTML += "</ul>";
+
+    document.getElementById("trailStatus").innerHTML = trailHTML;
 }
+
+document.addEventListener("DOMContentLoaded", fetchTrailStatus);
+
 
 
     </script>
