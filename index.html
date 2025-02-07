@@ -34,13 +34,16 @@
             font-size: 18px;
             font-weight: bold;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: space-between;
+            justify-content: center;
+            text-align: center;
         }
         .open { background: #d4edda; color: #155724; }
         .closed { background: #f8d7da; color: #721c24; }
         .on-hold { background: #fff3cd; color: #856404; }
-        .checkmark { margin-left: 10px; font-size: 18px; color: #28a745; }
+        .checkmark { font-size: 18px; color: #28a745; }
+        .surface { font-size: 14px; font-style: italic; }
     </style>
 </head>
 <body>
@@ -73,7 +76,8 @@
                             centralTrails.push({
                                 name: trail.name,
                                 status: trail.status,
-                                groomed: trail.groomed === true
+                                groomed: trail.groomed === true,
+                                surface: trail.primarySurface || "Unknown"
                             });
                         });
                     }
@@ -98,9 +102,14 @@
                 if (!trail || !trail.name) return;
 
                 let statusClass = trail.status.toLowerCase().replace(" ", "-");
-                let groomedCheckmark = trail.groomed ? `<span class="checkmark">✅</span>` : "";
+                let groomedCheckmark = trail.groomed ? `<span class="checkmark">✅</span>` : "❌";
+                let surfaceText = `<div class="surface">Surface: ${trail.surface}</div>`;
                 
-                trailHTML += `<div class="trail ${statusClass}">${trail.name} ${groomedCheckmark}</div>`;
+                trailHTML += `<div class="trail ${statusClass}">
+                    <strong>${trail.name}</strong><br>
+                    ${groomedCheckmark} Groomed<br>
+                    ${surfaceText}
+                </div>`;
             });
 
             document.getElementById("trailStatus").innerHTML = trailHTML;
