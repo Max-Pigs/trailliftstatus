@@ -36,11 +36,11 @@
         const parser = new DOMParser();
         const doc = parser.parseFromString(text, "text/html");
 
-        // Debugging: Log document structure
+        // Debug: Log document structure
         console.log("Document Structure:", doc.body.innerHTML);
 
-        // Select the trail status section using #question_2
-        let trailsSection = doc.querySelector("#question_2");
+        // Find the correct trail status container
+        let trailsSection = doc.querySelector("#trail-status > div > div > div.flex.flex-col.gap-10.gap-y-14.lg\\:grid.lg\\:grid-cols-10 > div.col-span-1.flex.flex-col.gap-10.lg\\:col-span-7 > div:nth-child(5)");
 
         if (!trailsSection) {
             throw new Error("Trail status section not found! Check the selector.");
@@ -50,7 +50,7 @@
         let trails = trailsSection.querySelectorAll("ul li");
 
         if (!trails.length) {
-            throw new Error("No trail data found inside #question_2! Check the structure.");
+            throw new Error("No trail data found! Check the structure.");
         }
 
         let output = "<h2>Trail Status</h2>";
@@ -73,6 +73,7 @@
 
 // Run function on page load
 fetchTrailStatus();
+
 
 
     </script>
