@@ -18,26 +18,31 @@
     <div id="trail-status" class="trail-list">Loading...</div>
 
     <script>
-        async function fetchTrailStatus() {
+       async function fetchTrailStatus() {
     try {
         console.log("Fetching trail status...");
 
-        // Use a free CORS proxy to bypass restrictions
-        const response = await fetch("https://api.allorigins.win/get?url=" + encodeURIComponent("https://www.summitatsnoqualmie.com/mountain-report#trail-status"));
+        // Use a CORS proxy to fetch the page source
+        const response = await fetch("https://corsproxy.io/?" + encodeURIComponent("https://www.summitatsnoqualmie.com/mountain-report#trail-status"));
         
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
 
-        const data = await response.json();
-        console.log("Fetched data successfully:", data);
+        const text = await response.text();
+        console.log("Fetched data successfully:", text);
 
         // Parse the fetched HTML
         const parser = new DOMParser();
-        const doc = parser.parseFromString(data.contents, "text/html");
+        const doc = parser.parseFromString(text, "text/html");
 
-        // Select the correct trail status section
-        const trails = doc.querySelectorAll('[id="2-dropdown"] ul li');
+        // Debug: Log the entire document structure to find the correct selector
+        console.log("Document Structure:", doc.body.innerHTML);
+
+        // Try multiple selectors to find the trail data
+        let trails = doc.querySelectorAll('[id="2-dropdown"] ul li'); // Original
+        if (!trails.length) trails = doc.querySelectorAll('.trail-status ul li'); // Alternative selector
+        if (!trails.length) trails = doc.querySelectorAll('.some-other-class li'); // Another backup
 
         if (!trails.length) {
             throw new Error("No trail data found! Check the selector.");
