@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Summit Weather & Snowfall</title>
+    <link rel="stylesheet" href="styles.css">
+    <script defer src="weather.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #003366;
+        }
+        .weather-info {
+            font-size: 1.5rem;
+            margin: 15px 0;
+        }
+        .snow-info {
+            font-size: 1.2rem;
+            margin: 10px 0;
+            padding: 10px;
+            background: #e3f2fd;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Current Weather & Snowfall</h1>
+        <div id="weather" class="weather-info">Loading...</div>
+        <h2>Snowfall Totals</h2>
+        <div id="snowfall" class="snow-info">Loading...</div>
+    </div>
+</body>
+</html>
