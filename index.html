@@ -19,39 +19,38 @@
 
     <script>
         async function fetchTrailStatus() {
-            try {
-                // Fetch HTML content of the page
-                const response = await fetch("https://www.summitatsnoqualmie.com/mountain-report#trail-status", {
-                    mode: 'no-cors' // Wix does not support direct API calls; may need a proxy
-                });
-                const text = await response.text();
+    try {
+        const response = await fetch("https://api.allorigins.win/get?url=" + encodeURIComponent("https://www.summitatsnoqualmie.com/mountain-report#trail-status"));
+        const data = await response.json();
 
-                // Create a virtual DOM parser
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(text, "text/html");
+        // Extract the HTML from the fetched page
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(data.contents, "text/html");
 
-                // Find the trail list (update selector based on real page structure)
-                const trails = doc.querySelectorAll('[id="2-dropdown"] ul li');
+        // Find the trail list (modify selector as needed)
+        const trails = doc.querySelectorAll('[id="2-dropdown"] ul li');
 
-                let output = "";
+        let output = "";
 
-                trails.forEach(trail => {
-                    let name = trail.querySelector("p")?.innerText || "Unknown Trail";
-                    let statusImg = trail.querySelector('img[alt="Open"], img[alt="Closed"]');
-                    let status = statusImg ? statusImg.alt : "Unknown";
-                    let statusClass = status === "Open" ? "open" : "closed";
+        trails.forEach(trail => {
+            let name = trail.querySelector("p")?.innerText || "Unknown Trail";
+            let statusImg = trail.querySelector('img[alt="Open"], img[alt="Closed"]');
+            let status = statusImg ? statusImg.alt : "Unknown";
+            let statusClass = status === "Open" ? "open" : "closed";
 
-                    output += `<div class="trail"><strong>${name}</strong> - <span class="${statusClass}">${status}</span></div>`;
-                });
+            output += `<div class="trail"><strong>${name}</strong> - <span class="${statusClass}">${status}</span></div>`;
+        });
 
-                document.getElementById("trail-status").innerHTML = output;
-            } catch (error) {
-                console.error("Error fetching trail status:", error);
-                document.getElementById("trail-status").innerHTML = "Failed to load trail data.";
-            }
-        }
+        document.getElementById("trail-status").innerHTML = output;
+    } catch (error) {
+        console.error("Error fetching trail status:", error);
+        document.getElementById("trail-status").innerHTML = "Failed to load trail data.";
+    }
+}
 
-        fetchTrailStatus();
+// Run function on page load
+fetchTrailStatus();
+
     </script>
 </body>
 </html>
