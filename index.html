@@ -12,16 +12,16 @@
             background-color: #f4f4f4;  
         }
         h1 {
-            font-size: 24px; 
+            font-size: 28px; 
             font-weight: bold; 
             color: #222; 
             margin-bottom: 15px;
         }
         #trailStatus {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Responsive grid */
-            gap: 8px;
-            max-width: 700px;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Responsive grid */
+            gap: 10px;
+            max-width: 800px;
             margin: auto;
             padding: 10px;
             background: white;
@@ -29,27 +29,21 @@
             border-radius: 5px;
         }
         .trail {
-            padding: 8px;
-            border-radius: 6px;
-            font-size: 14px;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 20px;
             font-weight: bold;
             display: flex;
-            flex-direction: column;
             align-items: center;
-            text-align: center;
-            justify-content: center;
-            min-height: 60px;
+            justify-content: space-between;
+            min-height: 50px;
         }
         .open { background: #d4edda; color: #155724; }
         .closed { background: #f8d7da; color: #721c24; }
         .on-hold { background: #fff3cd; color: #856404; }
         .difficulty {
-            font-size: 18px;
-            margin-bottom: 3px;
-        }
-        .trail-info {
-            font-size: 12px;
-            color: #333;
+            font-size: 22px;
+            margin-right: 10px;
         }
     </style>
 </head>
@@ -121,8 +115,7 @@
                 let difficultySymbol = `<span class="difficulty">${difficultyIcons[trail.difficulty] || "❓"}</span>`;
                 
                 trailHTML += `<div class="trail ${statusClass}">
-                    ${difficultySymbol} <strong>${trail.name}</strong>
-                    <div class="trail-info">${groomedCheckmark} Groomed</div>
+                    ${difficultySymbol} ${trail.name} ${groomedCheckmark}
                 </div>`;
             });
 
