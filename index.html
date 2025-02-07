@@ -18,47 +18,31 @@
     <div id="trail-status" class="trail-list">Loading...</div>
 
     <script>
-       async function fetchTrailStatus() {
+      async function fetchTrailStatus() {
     try {
-        console.log("Fetching trail status...");
+        console.log("Fetching trail status from API...");
 
-        // Use a CORS proxy to fetch the page source
-        const response = await fetch("https://corsproxy.io/?" + encodeURIComponent("https://www.summitatsnoqualmie.com/mountain-report#trail-status"));
+        // Fetch data from the Summit at Snoqualmie API
+        const response = await fetch("https://www.summitatsnoqualmie.com/api/reportpal?resortName=ss");
 
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
 
-        const text = await response.text();
-        console.log("Fetched data successfully:", text);
+        const data = await response.json();
+        console.log("Fetched Trail Data:", data);
 
-        // Parse the fetched HTML
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(text, "text/html");
-
-        // Debug: Log document structure
-        console.log("Document Structure:", doc.body.innerHTML);
-
-        // Find the correct trail status container
-        let trailsSection = doc.querySelector("#trail-status > div > div > div.flex.flex-col.gap-10.gap-y-14.lg\\:grid.lg\\:grid-cols-10 > div.col-span-1.flex.flex-col.gap-10.lg\\:col-span-7 > div:nth-child(5)");
-
-        if (!trailsSection) {
-            throw new Error("Trail status section not found! Check the selector.");
+        // Navigate through the JSON structure to find the trail status list
+        if (!data || !data.data || !data.data.trails) {
+            throw new Error("Invalid API response: No trail data found.");
         }
 
-        // Extract all list items inside the trail status section
-        let trails = trailsSection.querySelectorAll("ul li");
-
-        if (!trails.length) {
-            throw new Error("No trail data found! Check the structure.");
-        }
-
+        let trails = data.data.trails;
         let output = "<h2>Trail Status</h2>";
 
         trails.forEach(trail => {
-            let name = trail.querySelector("p")?.innerText || "Unknown Trail";
-            let statusImg = trail.querySelector('img[alt="Open"], img[alt="Closed"]');
-            let status = statusImg ? statusImg.alt : "Unknown";
+            let name = trail.name || "Unknown Trail";
+            let status = trail.status || "Unknown"; // Usually "Open" or "Closed"
             let statusClass = status === "Open" ? "open" : "closed";
 
             output += `<div class="trail"><strong>${name}</strong> - <span class="${statusClass}">${status}</span></div>`;
@@ -73,6 +57,7 @@
 
 // Run function on page load
 fetchTrailStatus();
+
 
 
 
