@@ -11,22 +11,33 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            const conditions = data.currentConditions.resortwide;
             const locations = data.currentConditions.resortLocations.location;
-            const baseDepth = locations.find(loc => loc.name === "Summit West").base.inches;
+            let weatherHTML = "<h2>Weather by Location</h2>";
+            let snowfallHTML = "<h2>Snowfall Totals by Location</h2>";
 
-            weatherDiv.innerHTML = `
-                <strong>Temperature:</strong> ${conditions.temperature || "N/A"}°F<br>
-                <strong>Weather:</strong> ${conditions.weatherSummary || "N/A"}<br>
-                <strong>Wind:</strong> ${conditions.windSpeed || "N/A"} mph
-            `;
-
-            snowfallDiv.innerHTML = `
-                <strong>Last 24h:</strong> ${locations[0].snow24Hours.inches}"<br>
-                <strong>Last 48h:</strong> ${locations[0].snow48Hours.inches}"<br>
-                <strong>Season Total:</strong> ${locations[0].snowSeasonTotal.inches}"<br>
-                <strong>Base Depth:</strong> ${baseDepth}" 
-            `;
+            locations.forEach(location => {
+                weatherHTML += `
+                    <div class="location-section">
+                        <h3>${location.name}</h3>
+                        <strong>Surface:</strong> ${location.primarySurface || "N/A"} (${location.secondarySurface || "N/A"})<br>
+                        <strong>Temperature:</strong> ${location.temperature || "N/A"}°F<br>
+                        <strong>Wind:</strong> ${location.windSpeed || "N/A"} mph<br>
+                    </div>
+                `;
+                
+                snowfallHTML += `
+                    <div class="location-section">
+                        <h3>${location.name}</h3>
+                        <strong>Last 24h:</strong> ${location.snow24Hours.inches}"<br>
+                        <strong>Last 48h:</strong> ${location.snow48Hours.inches}"<br>
+                        <strong>Season Total:</strong> ${location.snowSeasonTotal.inches}"<br>
+                        <strong>Base Depth:</strong> ${location.base.inches}"<br>
+                    </div>
+                `;
+            });
+            
+            weatherDiv.innerHTML = weatherHTML;
+            snowfallDiv.innerHTML = snowfallHTML;
         })
         .catch(error => {
             console.error("Error fetching weather data:", error);
