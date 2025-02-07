@@ -19,7 +19,7 @@
 
     <script>
    document.addEventListener("DOMContentLoaded", 
-                            async function fetchTrailStatus() {
+                           async function fetchTrailStatus() {
     try {
         let response = await fetch("https://snoq.max-4f5.workers.dev/");
         
@@ -43,7 +43,7 @@
                     trails.push({
                         name: trail.name,
                         status: trail.status,
-                        groomed: trail.groomed || false // Default to false if missing
+                        groomed: trail.groomed === true // Ensure groomed field is a boolean
                     });
                 });
             }
@@ -81,8 +81,6 @@ function displayTrailStatus(trails) {
 }
 
 document.addEventListener("DOMContentLoaded", fetchTrailStatus);
-
-
 
     </script>
 </body>
