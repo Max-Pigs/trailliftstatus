@@ -24,7 +24,7 @@
 
         // Use a CORS proxy to fetch the page source
         const response = await fetch("https://corsproxy.io/?" + encodeURIComponent("https://www.summitatsnoqualmie.com/mountain-report#trail-status"));
-        
+
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
@@ -36,16 +36,21 @@
         const parser = new DOMParser();
         const doc = parser.parseFromString(text, "text/html");
 
-        // Debug: Log the entire document structure to find the correct selector
+        // Debugging: Log document structure
         console.log("Document Structure:", doc.body.innerHTML);
 
-        // Try multiple selectors to find the trail data
-        let trails = doc.querySelectorAll('[id="2-dropdown"] ul li'); // Original
-        if (!trails.length) trails = doc.querySelectorAll('.trail-status ul li'); // Alternative selector
-        if (!trails.length) trails = doc.querySelectorAll('.some-other-class li'); // Another backup
+        // Select the trail status section using #question_2
+        let trailsSection = doc.querySelector("#question_2");
+
+        if (!trailsSection) {
+            throw new Error("Trail status section not found! Check the selector.");
+        }
+
+        // Extract all list items inside the trail status section
+        let trails = trailsSection.querySelectorAll("ul li");
 
         if (!trails.length) {
-            throw new Error("No trail data found! Check the selector.");
+            throw new Error("No trail data found inside #question_2! Check the structure.");
         }
 
         let output = "<h2>Trail Status</h2>";
@@ -68,6 +73,7 @@
 
 // Run function on page load
 fetchTrailStatus();
+
 
     </script>
 </body>
