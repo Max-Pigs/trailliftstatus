@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trail & Lift Status - Snoqualmie</title>
+    <title>Summit Central Trail & Lift Status</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -12,36 +12,40 @@
             background-color: #f4f4f4;
         }
         h1 {
-            color: #333;
+            font-size: 28px;
+            font-weight: bold;
+            color: #222;
+            margin-bottom: 15px;
         }
         #trailStatus {
-            margin-top: 20px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr); /* Two columns */
+            gap: 10px;
+            max-width: 700px;
+            margin: auto;
             padding: 15px;
             background: white;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
             border-radius: 5px;
         }
-        ul {
-            list-style: none;
-            padding: 0;
+        .trail {
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
-        li {
-            padding: 8px;
-            margin: 5px 0;
-            background: #e9ecef;
-            border-radius: 5px;
-        }
-        .open { color: green; }
-        .closed { color: red; }
-        .on-hold { color: orange; }
+        .open { background: #d4edda; color: #155724; }
+        .closed { background: #f8d7da; color: #721c24; }
+        .on-hold { background: #fff3cd; color: #856404; }
+        .checkmark { margin-left: 10px; font-size: 18px; color: #28a745; }
     </style>
 </head>
 <body>
 
-    <h1>Snoqualmie Trail & Lift Status</h1>
+    <h1>Summit Central Trail & Lift Status</h1>
     <div id="trailStatus">Loading trail data...</div>
 
     <script>
@@ -55,17 +59,18 @@
 
                 let data = await response.json();
                 
-                console.log("API Response:", data); // Debug log
+                console.log("API Response:", data);
 
                 if (!data || !data.facilities || !data.facilities.areas || !data.facilities.areas.area) {
                     throw new Error("Invalid API response: No trail data found.");
                 }
 
-                let trails = [];
+                // Filter trails for only "Summit Central"
+                let centralTrails = [];
                 data.facilities.areas.area.forEach(area => {
-                    if (area.trails && area.trails.trail) {
+                    if (area.name === "Summit Central" && area.trails && area.trails.trail) {
                         area.trails.trail.forEach(trail => {
-                            trails.push({
+                            centralTrails.push({
                                 name: trail.name,
                                 status: trail.status,
                                 groomed: trail.groomed === true
@@ -74,8 +79,8 @@
                     }
                 });
 
-                console.log("Extracted Trails:", trails);
-                displayTrailStatus(trails);
+                console.log("Summit Central Trails:", centralTrails);
+                displayTrailStatus(centralTrails);
             } catch (error) {
                 console.error("Error fetching trail status:", error);
                 document.getElementById("trailStatus").innerHTML = `<p style="color: red;">Error loading data. Please try again.</p>`;
@@ -88,15 +93,15 @@
                 return;
             }
 
-            let trailHTML = "<ul>";
+            let trailHTML = "";
             trails.forEach(trail => {
                 if (!trail || !trail.name) return;
 
                 let statusClass = trail.status.toLowerCase().replace(" ", "-");
-                let groomedText = trail.groomed ? " (Groomed)" : "";
-                trailHTML += `<li class="${statusClass}">${trail.name} - <strong>${trail.status}</strong> ${groomedText}</li>`;
+                let groomedCheckmark = trail.groomed ? `<span class="checkmark">✅</span>` : "";
+                
+                trailHTML += `<div class="trail ${statusClass}">${trail.name} ${groomedCheckmark}</div>`;
             });
-            trailHTML += "</ul>";
 
             document.getElementById("trailStatus").innerHTML = trailHTML;
         }
