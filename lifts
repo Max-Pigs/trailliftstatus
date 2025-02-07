@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Summit Central Lift Status</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            font-size: 28px;
+            font-weight: bold;
+            color: #222;
+            margin-bottom: 15px;
+        }
+        #liftStatus {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr); /* Two columns */
+            gap: 10px;
+            max-width: 700px;
+            margin: auto;
+            padding: 15px;
+            background: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+        }
+        .lift {
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .open { background: #d4edda; color: #155724; }
+        .closed { background: #f8d7da; color: #721c24; }
+        .on-hold { background: #fff3cd; color: #856404; }
+        .delayed { background: #ffeeba; color: #856404; }
+        .scheduled { background: #d1ecf1; color: #0c5460; }
+        .lift-type { font-size: 14px; font-weight: normal; margin-left: 10px; color: #333; }
+    </style>
+</head>
+<body>
+
+    <h1>Summit Central Lift Status</h1>
+    <div id="liftStatus">Loading lift data...</div>
+
+    <script>
+        async function fetchLiftStatus() {
+            try {
+                let response = await fetch("https://snoq.max-4f5.workers.dev/");
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                let data = await response.json();
+                
+                console.log("API Response:", data);
+
+                if (!data || !data.facilities || !data.facilities.areas || !data.facilities.areas.area) {
+                    throw new Error("Invalid API response: No lift data found.");
+                }
+
+                // Extract lifts only for "Summit Central"
+                let centralLifts = [];
+                data.facilities.areas.area.forEach(area => {
+                    if (area.name === "Summit Central" && area.lifts && area.lifts.lift) {
+                        area.lifts.lift.forEach(lift => {
+                            centralLifts.push({
+                                name: lift.name,
+                                status: lift.status,
+                                type: lift.liftIcon // Example: "chairlift-4"
+                            });
+                        });
+                    }
+                });
+
+                console.log("Summit Central Lifts:", centralLifts);
+                displayLiftStatus(centralLifts);
+            } catch (error) {
+                console.error("Error fetching lift status:", error);
+                document.getElementById("liftStatus").innerHTML = `<p style="color: red;">Error loading data. Please try again.</p>`;
+            }
+        }
+
+        function displayLiftStatus(lifts) {
+            if (!lifts || lifts.length === 0) {
+                document.getElementById("liftStatus").innerHTML = "<p>No lift data available.</p>";
+                return;
+            }
+
+            let liftHTML = "";
+            lifts.forEach(lift => {
+                if (!lift || !lift.name) return;
+
+                let statusClass = lift.status.toLowerCase().replace(" ", "-");
+                let liftTypeText = lift.type ? `(${lift.type.replace("chairlift-", "")}-seat)` : "";
+
+                liftHTML += `<div class="lift ${statusClass}">${lift.name} <span class="lift-type">${liftTypeText}</span></div>`;
+            });
+
+            document.getElementById("liftStatus").innerHTML = liftHTML;
+        }
+
+        document.addEventListener("DOMContentLoaded", fetchLiftStatus);
+    </script>
+
+</body>
+</html>
