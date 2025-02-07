@@ -22,14 +22,29 @@
     try {
         console.log("Fetching trail status using CORS proxy...");
 
-        // Use corsproxy.io to bypass CORS restrictions
+        // API URL
         const apiUrl = "https://www.summitatsnoqualmie.com/api/reportpal?resortName=ss";
-        const corsProxyUrl = "https://corsproxy.io/?";
 
-        const response = await fetch(corsProxyUrl + encodeURIComponent(apiUrl));
+        // Alternative CORS proxies (try them one by one if needed)
+        const corsProxies = [
+            "https://api.allorigins.win/raw?url=",
+            "https://thingproxy.freeboard.io/fetch/",
+            "https://cors-anywhere.herokuapp.com/"
+        ];
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
+        // Try different proxies until one works
+        let response;
+        for (const proxy of corsProxies) {
+            try {
+                response = await fetch(proxy + encodeURIComponent(apiUrl));
+                if (response.ok) break; // Stop trying if request succeeds
+            } catch (err) {
+                console.warn(`Proxy failed: ${proxy}`, err);
+            }
+        }
+
+        if (!response || !response.ok) {
+            throw new Error(`All CORS proxies failed! Last error: ${response ? response.status : 'No response'}`);
         }
 
         const data = await response.json();
@@ -60,6 +75,7 @@
 
 // Run function on page load
 fetchTrailStatus();
+
 
     </script>
 </body>
