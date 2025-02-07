@@ -43,7 +43,10 @@
         .closed { background: #f8d7da; color: #721c24; }
         .on-hold { background: #fff3cd; color: #856404; }
         .checkmark { font-size: 18px; color: #28a745; }
-        .surface { font-size: 14px; font-style: italic; }
+        .difficulty-icon {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
     </style>
 </head>
 <body>
@@ -77,7 +80,7 @@
                                 name: trail.name,
                                 status: trail.status,
                                 groomed: trail.groomed === true,
-                                surface: trail.primarySurface || "Unknown"
+                                difficulty: trail.difficulty || "unknown"
                             });
                         });
                     }
@@ -97,18 +100,26 @@
                 return;
             }
 
+            const difficultyIcons = {
+                "beginner": "🟢", // Green Circle
+                "intermediate": "🔷", // Blue Square
+                "advanced": "◆", // Black Diamond
+                "expert": "◇◇", // Double Black Diamond
+                "unknown": "❓" // Unknown
+            };
+
             let trailHTML = "";
             trails.forEach(trail => {
                 if (!trail || !trail.name) return;
 
                 let statusClass = trail.status.toLowerCase().replace(" ", "-");
-                let groomedCheckmark = trail.groomed ? `<span class="checkmark">✅</span>` : "❌";
-                let surfaceText = `<div class="surface">Surface: ${trail.surface}</div>`;
+                let groomedCheckmark = trail.groomed ? `<span class="checkmark">✅ Groomed</span>` : "❌ Not Groomed";
+                let difficultySymbol = `<div class="difficulty-icon">${difficultyIcons[trail.difficulty] || "❓"}</div>`;
                 
                 trailHTML += `<div class="trail ${statusClass}">
+                    ${difficultySymbol}
                     <strong>${trail.name}</strong><br>
-                    ${groomedCheckmark} Groomed<br>
-                    ${surfaceText}
+                    ${groomedCheckmark}
                 </div>`;
             });
 
