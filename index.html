@@ -20,17 +20,30 @@
     <script>
         async function fetchTrailStatus() {
     try {
-        const response = await fetch("https://api.allorigins.win/get?url=" + encodeURIComponent("https://www.summitatsnoqualmie.com/mountain-report#trail-status"));
-        const data = await response.json();
+        console.log("Fetching trail status...");
 
-        // Extract the HTML from the fetched page
+        // Use a free CORS proxy to bypass restrictions
+        const response = await fetch("https://api.allorigins.win/get?url=" + encodeURIComponent("https://www.summitatsnoqualmie.com/mountain-report#trail-status"));
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("Fetched data successfully:", data);
+
+        // Parse the fetched HTML
         const parser = new DOMParser();
         const doc = parser.parseFromString(data.contents, "text/html");
 
-        // Find the trail list (modify selector as needed)
+        // Select the correct trail status section
         const trails = doc.querySelectorAll('[id="2-dropdown"] ul li');
 
-        let output = "";
+        if (!trails.length) {
+            throw new Error("No trail data found! Check the selector.");
+        }
+
+        let output = "<h2>Trail Status</h2>";
 
         trails.forEach(trail => {
             let name = trail.querySelector("p")?.innerText || "Unknown Trail";
@@ -44,7 +57,7 @@
         document.getElementById("trail-status").innerHTML = output;
     } catch (error) {
         console.error("Error fetching trail status:", error);
-        document.getElementById("trail-status").innerHTML = "Failed to load trail data.";
+        document.getElementById("trail-status").innerHTML = `<p style="color: red;">Failed to load trail data.</p>`;
     }
 }
 
