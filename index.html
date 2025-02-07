@@ -18,7 +18,7 @@
     <div id="trail-status" class="trail-list">Loading...</div>
 
     <script>
-     async function fetchTrailStatus() {
+    async function fetchTrailStatus() {
     try {
         console.log("Fetching trail status from API...");
 
@@ -45,9 +45,14 @@
                 area.trails.trail.forEach((trail) => {
                     let name = trail.name || "Unknown Trail";
                     let status = trail.status || "Unknown"; // Usually "Open" or "Closed"
+                    let groomed = trail.groomed ? "✔️ Groomed" : "❌ Not Groomed";
                     let statusClass = status === "Open" ? "open" : "closed";
 
-                    output += `<li><strong>${name}</strong> - <span class="${statusClass}">${status}</span></li>`;
+                    output += `<li>
+                        <strong>${name}</strong> - 
+                        <span class="${statusClass}">${status}</span> 
+                        <span class="groomed">(${groomed})</span>
+                    </li>`;
                 });
                 output += "</ul>";
             }
@@ -62,7 +67,6 @@
 
 // Run function on page load
 fetchTrailStatus();
-
 
     </script>
 </body>
