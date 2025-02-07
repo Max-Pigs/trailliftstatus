@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trail Status - Snoqualmie</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; background-color: #222; color: white; }
+        h1 { color: yellow; }
+        .trail-list { display: inline-block; text-align: left; margin-top: 20px; }
+        .trail { padding: 10px; border-bottom: 1px solid #ccc; }
+        .open { color: green; font-weight: bold; }
+        .closed { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Summit at Snoqualmie - Live Trail Status</h1>
+    <div id="trail-status" class="trail-list">Loading...</div>
+
+    <script>
+        async function fetchTrailStatus() {
+            try {
+                // Fetch HTML content of the page
+                const response = await fetch("https://www.summitatsnoqualmie.com/mountain-report#trail-status", {
+                    mode: 'no-cors' // Wix does not support direct API calls; may need a proxy
+                });
+                const text = await response.text();
+
+                // Create a virtual DOM parser
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(text, "text/html");
+
+                // Find the trail list (update selector based on real page structure)
+                const trails = doc.querySelectorAll('[id="2-dropdown"] ul li');
+
+                let output = "";
+
+                trails.forEach(trail => {
+                    let name = trail.querySelector("p")?.innerText || "Unknown Trail";
+                    let statusImg = trail.querySelector('img[alt="Open"], img[alt="Closed"]');
+                    let status = statusImg ? statusImg.alt : "Unknown";
+                    let statusClass = status === "Open" ? "open" : "closed";
+
+                    output += `<div class="trail"><strong>${name}</strong> - <span class="${statusClass}">${status}</span></div>`;
+                });
+
+                document.getElementById("trail-status").innerHTML = output;
+            } catch (error) {
+                console.error("Error fetching trail status:", error);
+                document.getElementById("trail-status").innerHTML = "Failed to load trail data.";
+            }
+        }
+
+        fetchTrailStatus();
+    </script>
+</body>
+</html>
