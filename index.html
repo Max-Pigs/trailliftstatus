@@ -18,55 +18,62 @@
     <div id="trail-status" class="trail-list">Loading...</div>
 
     <script>
-    async function fetchTrailStatus() {
+   document.addEventListener("DOMContentLoaded", async function () {
+    const apiUrl = "https://snoq.max-4f5.workers.dev"; // Replace with your actual Cloudflare Worker URL
+
     try {
-        console.log("Fetching trail status from API...");
-
-        // Fetch data from the API directly
-        const response = await fetch("https://www.summitatsnoqualmie.com/api/reportpal?resortName=ss");
-
+        const response = await fetch(apiUrl);
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
 
         const data = await response.json();
-        console.log("Full API Response:", data); // Log full response for debugging
-
-        if (!data || !data.facilities || !data.facilities.areas || !data.facilities.areas.area) {
-            throw new Error("Invalid API response: No area trail data found.");
-        }
-
-        let output = "<h2>Trail Status</h2>";
-
-        // Loop through all areas and extract trails
-        data.facilities.areas.area.forEach((area) => {
-            if (area.trails && area.trails.trail) {
-                output += `<h3>${area.name}</h3><ul>`;
-                area.trails.trail.forEach((trail) => {
-                    let name = trail.name || "Unknown Trail";
-                    let status = trail.status || "Unknown"; // Usually "Open" or "Closed"
-                    let groomed = trail.groomed ? "✔️ Groomed" : "❌ Not Groomed";
-                    let statusClass = status === "Open" ? "open" : "closed";
-
-                    output += `<li>
-                        <strong>${name}</strong> - 
-                        <span class="${statusClass}">${status}</span> 
-                        <span class="groomed">(${groomed})</span>
-                    </li>`;
-                });
-                output += "</ul>";
-            }
-        });
-
-        document.getElementById("trail-status").innerHTML = output;
+        displayTrailStatus(data);
     } catch (error) {
         console.error("Error fetching trail status:", error);
-        document.getElementById("trail-status").innerHTML = `<p style="color: red;">Failed to load trail data. Check console for errors.</p>`;
+        document.getElementById("trail-status").innerHTML = "<p>Failed to load trail status.</p>";
     }
+});
+
+function displayTrailStatus(data) {
+    const trailContainer = document.getElementById("trail-status");
+    trailContainer.innerHTML = "<h2>Trail & Lift Status</h2>";
+
+    if (!data || !data.facilities || !data.facilities.areas) {
+        trailContainer.innerHTML += "<p>No data available.</p>";
+        return;
+    }
+
+    data.facilities.areas.area.forEach((area) => {
+        const areaTitle = document.createElement("h3");
+        areaTitle.textContent = area.name;
+        trailContainer.appendChild(areaTitle);
+
+        // Lifts
+        if (area.lifts && area.lifts.lift.length > 0) {
+            const liftList = document.createElement("ul");
+            area.lifts.lift.forEach((lift) => {
+                const liftItem = document.createElement("li");
+                liftItem.innerHTML = `<strong>${lift.name}</strong>: ${lift.status}`;
+                liftList.appendChild(liftItem);
+            });
+            trailContainer.appendChild(liftList);
+        }
+
+        // Trails
+        if (area.trails && area.trails.trail.length > 0) {
+            const trailList = document.createElement("ul");
+            area.trails.trail.forEach((trail) => {
+                const trailItem = document.createElement("li");
+                const groomed = trail.groomed ? "✅ Groomed" : "❌ Not Groomed";
+                trailItem.innerHTML = `<strong>${trail.name}</strong>: ${trail.status} (${groomed})`;
+                trailList.appendChild(trailItem);
+            });
+            trailContainer.appendChild(trailList);
+        }
+    });
 }
 
-// Run function on page load
-fetchTrailStatus();
 
     </script>
 </body>
