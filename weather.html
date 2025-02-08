@@ -8,46 +8,53 @@
         body {
             font-family: Arial, sans-serif;
             text-align: center;
-            padding: 20px;
+            padding: 15px;
             background-color: #f4f4f4;
-        }
-        h1 {
-            font-size: 28px;
-            font-weight: bold;
-            color: #222;
-            margin-bottom: 15px;
         }
         #weather-status {
             display: grid;
-            grid-template-columns: repeat(2, 1fr); /* Two columns */
-            gap: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Responsive grid */
+            gap: 10px;
             max-width: 800px;
             margin: auto;
-            padding: 15px;
+            padding: 10px;
             background: white;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             border-radius: 5px;
         }
         .weather-entry {
             background: #e3f2fd;
-            padding: 15px;
+            padding: 12px;
             border-radius: 8px;
             font-size: 16px;
             text-align: left;
             box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
         }
         .weather-entry h3 {
-            font-size: 20px;
-            margin-bottom: 8px;
+            font-size: 18px;
+            margin-bottom: 5px;
         }
         .label {
             font-weight: bold;
+        }
+
+        /* Reduce padding & font size on smaller screens */
+        @media (max-width: 600px) {
+            body {
+                padding: 5px;
+            }
+            .weather-entry {
+                padding: 8px;
+                font-size: 14px;
+            }
+            .weather-entry h3 {
+                font-size: 16px;
+            }
         }
     </style>
 </head>
 <body>
 
-    <h1>Summit at Snoqualmie Weather</h1>
     <div id="weather-status">Loading weather data...</div>
 
     <script>
@@ -76,7 +83,7 @@
                                 <h3>${location.name}</h3>
                                 <p><span class="label">Base Depth:</span> ${baseDepth}</p>
                                 <p><span class="label">Snow (Last 24h):</span> ${snow24h}</p>
-                                <p><span class="label">Surface Conditions:</span> ${surfaceCondition}, ${secondarySurface}</p>
+                                <p><span class="label">Surface:</span> ${surfaceCondition}, ${secondarySurface}</p>
                             </div>
                         `;
                     });
