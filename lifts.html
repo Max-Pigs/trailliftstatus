@@ -11,17 +11,11 @@
             padding: 20px;
             background-color: #f4f4f4;
         }
-        h1 {
-            font-size: 28px;
-            font-weight: bold;
-            color: #222;
-            margin-bottom: 15px;
-        }
         #liftStatus {
             display: grid;
-            grid-template-columns: repeat(2, 1fr); /* Two columns */
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Responsive grid */
             gap: 10px;
-            max-width: 700px;
+            max-width: 800px;
             margin: auto;
             padding: 15px;
             background: white;
@@ -31,23 +25,40 @@
         .lift {
             padding: 12px;
             border-radius: 8px;
-            font-size: 18px;
+            font-size: 20px;
             font-weight: bold;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            min-height: 50px;
         }
         .open { background: #d4edda; color: #155724; }
         .closed { background: #f8d7da; color: #721c24; }
         .on-hold { background: #fff3cd; color: #856404; }
         .delayed { background: #ffeeba; color: #856404; }
         .scheduled { background: #d1ecf1; color: #0c5460; }
-        .lift-type { font-size: 14px; font-weight: normal; margin-left: 10px; color: #333; }
+
+        /* Lift type text: hides on small screens, shrinks on medium */
+        .lift-type {
+            font-size: 14px;
+            font-weight: normal;
+            margin-left: 10px;
+            color: #333;
+        }
+        @media (max-width: 500px) {
+            .lift-type {
+                display: none;
+            }
+        }
+        @media (max-width: 800px) {
+            .lift-type {
+                font-size: 12px;
+            }
+        }
     </style>
 </head>
 <body>
 
-    <h1>Summit Central Lift Status</h1>
     <div id="liftStatus">Loading lift data...</div>
 
     <script>
