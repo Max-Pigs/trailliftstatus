@@ -13,9 +13,9 @@
         }
         #trailStatus {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* Dynamic columns */
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 10px;
-            max-width: 1200px;
+            max-width: 1400px;
             margin: auto;
             padding: 10px;
             background: white;
@@ -25,7 +25,7 @@
         .trail {
             padding: 12px;
             border-radius: 8px;
-            font-size: 22px;
+            font-size: 20px;
             font-weight: bold;
             display: flex;
             align-items: center;
@@ -37,27 +37,45 @@
         .closed { background: #f8d7da; color: #721c24; }
         .on-hold { background: #fff3cd; color: #856404; }
         .difficulty {
-            font-size: 24px;
+            font-size: 20px;
             min-width: 30px;
             text-align: center;
+            font-weight: bold;
         }
-        /* Responsive Design */
+        .key {
+            margin-top: 20px;
+            padding: 10px;
+            background: white;
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+            display: inline-block;
+            text-align: left;
+        }
         @media (max-width: 768px) {
             #trailStatus {
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             }
         }
         @media (max-width: 480px) {
             #trailStatus {
-                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
             }
         }
     </style>
 </head>
 <body>
-
+    <h2>Summit Central Trail & Lift Status</h2>
     <div id="trailStatus">Loading trail data...</div>
-
+    
+    <div class="key">
+        <h3>Key:</h3>
+        <p><img src="icons/beginner.png" width="20"> Beginner (Green Circle)</p>
+        <p><img src="icons/intermediate.png" width="20"> Intermediate (Blue Square)</p>
+        <p><img src="icons/advanced.png" width="20"> Advanced (Black Diamond)</p>
+        <p><img src="icons/expert.png" width="20"> Expert (Double Black Diamond)</p>
+        <p><img src="icons/groomed.png" width="20"> Groomed</p>
+    </div>
+    
     <script>
         async function fetchTrailStatus() {
             try {
@@ -69,13 +87,10 @@
 
                 let data = await response.json();
                 
-                console.log("API Response:", data);
-
                 if (!data || !data.facilities || !data.facilities.areas || !data.facilities.areas.area) {
                     throw new Error("Invalid API response: No trail data found.");
                 }
 
-                // Filter trails for only "Summit Central"
                 let centralTrails = [];
                 data.facilities.areas.area.forEach(area => {
                     if (area.name === "Summit Central" && area.trails && area.trails.trail) {
@@ -90,7 +105,6 @@
                     }
                 });
 
-                console.log("Summit Central Trails:", centralTrails);
                 displayTrailStatus(centralTrails);
             } catch (error) {
                 console.error("Error fetching trail status:", error);
@@ -104,24 +118,16 @@
                 return;
             }
 
-            const difficultyIcons = {
-                "beginner": "🟢", // Green Circle
-                "intermediate": "🔷", // Blue Square
-                "advanced": "◆", // Black Diamond
-                "expert": "◇◇", // Double Black Diamond
-                "unknown": "❓" // Unknown
-            };
-
             let trailHTML = "";
             trails.forEach(trail => {
                 if (!trail || !trail.name) return;
 
                 let statusClass = trail.status.toLowerCase().replace(" ", "-");
-                let groomedCheckmark = trail.groomed ? `✅` : `❌`;
-                let difficultySymbol = `<span class="difficulty">${difficultyIcons[trail.difficulty] || "❓"}</span>`;
+                let groomedIcon = trail.groomed ? `<img src="icons/groomed.png" width="20">` : "";
+                let difficultyIcon = `<img src="icons/${trail.difficulty}.png" width="20">`;
                 
                 trailHTML += `<div class="trail ${statusClass}">
-                    ${difficultySymbol} ${trail.name} ${groomedCheckmark}
+                    ${difficultyIcon} ${trail.name} ${groomedIcon}
                 </div>`;
             });
 
@@ -130,6 +136,5 @@
 
         document.addEventListener("DOMContentLoaded", fetchTrailStatus);
     </script>
-
 </body>
 </html>
