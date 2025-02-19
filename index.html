@@ -120,8 +120,8 @@
                 let statusClass = trail.status.toLowerCase().replace(" ", "-");
                 let groomedIcon = trail.groomed ? `<img src="https://github.com/Max-Pigs/trailliftstatus/blob/main/Groomed.png?raw=true" width="20">` : "";
                 let difficultyName = trail.difficulty ? trail.difficulty.charAt(0).toUpperCase() + trail.difficulty.slice(1).toLowerCase() : 'Unknown';
-let validDifficulties = ['Beginner', 'Intermediate', 'Advanced', 'Expert'];
-let difficultyIcon = validDifficulties.includes(difficultyName) ? `<img src="https://github.com/Max-Pigs/trailliftstatus/blob/main/${difficultyName}.png?raw=true" width="20">` : `<img src="trailliftstatus/Unknown.png" width="20">`;
+let validDifficulties = ['Beginner', 'Novice', 'Intermediate', 'Advanced', 'Expert'];
+let difficultyIcon = (difficultyName === 'Novice') ? `<img src="https://github.com/Max-Pigs/trailliftstatus/blob/main/Beginner.png?raw=true" width="20">` : (validDifficulties.includes(difficultyName) ? `<img src="https://github.com/Max-Pigs/trailliftstatus/blob/main/${difficultyName}.png?raw=true" width="20">` : `<img src="trailliftstatus/Unknown.png" width="20">`;
                 
                 trailHTML += `<div class="trail ${statusClass}">
                     ${difficultyIcon} ${trail.name} ${groomedIcon}
