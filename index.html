@@ -113,6 +113,7 @@
         }
 
         function displayTrailStatus(trails) {
+    console.log('Trail data received:', trails);
             if (!trails || trails.length === 0) {
                 document.getElementById("trailStatus").innerHTML = "<p>No trail data available.</p>";
                 return;
@@ -120,6 +121,7 @@
 
             let trailHTML = "";
             trails.forEach(trail => {
+        console.log(`Trail: ${trail.name}, Difficulty: ${trail.difficulty}`);
                 if (!trail || !trail.name) return;
 
                 let statusClass = trail.status.toLowerCase().replace(" ", "-");
