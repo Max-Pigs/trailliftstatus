@@ -67,7 +67,7 @@
     <h2>Summit Central Trail & Lift Status</h2>
     <div id="trailStatus">Loading trail data...</div>
     
-     <div class="key">
+    <div class="key">
         <h3>Key:</h3>
         <p><img src="trailliftstatus/Beginner.png" width="20"> Beginner (Green Circle)</p>
         <p><img src="trailliftstatus/Intermediate.png" width="20"> Intermediate (Blue Square)</p>
@@ -123,8 +123,10 @@
                 if (!trail || !trail.name) return;
 
                 let statusClass = trail.status.toLowerCase().replace(" ", "-");
-                let groomedIcon = trail.groomed ? `<img src="icons/groomed.png" width="20">` : "";
-                let difficultyIcon = `<img src="icons/${trail.difficulty}.png" width="20">`;
+                let groomedIcon = trail.groomed ? `<img src="trailliftstatus/Groomed.png" width="20">` : "";
+                let difficultyName = trail.difficulty ? trail.difficulty.charAt(0).toUpperCase() + trail.difficulty.slice(1).toLowerCase() : 'Unknown';
+let validDifficulties = ['Beginner', 'Intermediate', 'Advanced', 'Expert'];
+let difficultyIcon = validDifficulties.includes(difficultyName) ? `<img src="trailliftstatus/${difficultyName}.png" width="20">` : `<img src="trailliftstatus/Unknown.png" width="20">`;
                 
                 trailHTML += `<div class="trail ${statusClass}">
                     ${difficultyIcon} ${trail.name} ${groomedIcon}
