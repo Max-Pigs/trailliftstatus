@@ -70,10 +70,10 @@
     <div class="key">
         <h3>Key:</h3>
         <p><img src="https://github.com/Max-Pigs/trailliftstatus/blob/main/Beginner.png?raw=true" width="20"> Beginner (Green Circle)</p>
-        <p><img src="trailliftstatus/Intermediate.png" width="20"> Intermediate (Blue Square)</p>
-        <p><img src="trailliftstatus/Advanced.png" width="20"> Advanced (Black Diamond)</p>
-        <p><img src="trailliftstatus/Expert.png" width="20"> Expert (Double Black Diamond)</p>
-        <p><img src="trailliftstatus/Groomed.png" width="20"> Groomed</p>
+        <p><img src="https://github.com/Max-Pigs/trailliftstatus/blob/main/Intermediate.png?raw=true" width="20"> Intermediate (Blue Square)</p>
+        <p><img src="https://github.com/Max-Pigs/trailliftstatus/blob/main/Advanced.png?raw=true" width="20"> Advanced (Black Diamond)</p>
+        <p><img src="https://github.com/Max-Pigs/trailliftstatus/blob/main/Expert.png?raw=true" width="20"> Expert (Double Black Diamond)</p>
+        <p><img src="https://github.com/Max-Pigs/trailliftstatus/blob/main/Groomed.png?raw=true" width="20"> Groomed</p>
     </div>
     
     <script>
@@ -123,10 +123,10 @@
                 if (!trail || !trail.name) return;
 
                 let statusClass = trail.status.toLowerCase().replace(" ", "-");
-                let groomedIcon = trail.groomed ? `<img src="trailliftstatus/Groomed.png" width="20">` : "";
+                let groomedIcon = trail.groomed ? `<img src="https://github.com/Max-Pigs/trailliftstatus/blob/main/Groomed.png?raw=true" width="20">` : "";
                 let difficultyName = trail.difficulty ? trail.difficulty.charAt(0).toUpperCase() + trail.difficulty.slice(1).toLowerCase() : 'Unknown';
 let validDifficulties = ['Beginner', 'Intermediate', 'Advanced', 'Expert'];
-let difficultyIcon = validDifficulties.includes(difficultyName) ? `<img src="trailliftstatus/${difficultyName}.png" width="20">` : `<img src="trailliftstatus/Unknown.png" width="20">`;
+let difficultyIcon = validDifficulties.includes(difficultyName) ? `<img src="https://github.com/Max-Pigs/trailliftstatus/blob/main/${difficultyName}.png?raw=true" width="20">` : `<img src="trailliftstatus/Unknown.png" width="20">`;
                 
                 trailHTML += `<div class="trail ${statusClass}">
                     ${difficultyIcon} ${trail.name} ${groomedIcon}
