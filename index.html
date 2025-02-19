@@ -25,7 +25,7 @@
         .trail {
             padding: 12px;
             border-radius: 8px;
-            font-size: 20px;
+            font-size: clamp(14px, 2vw, 24px);
             font-weight: bold;
             display: flex;
             align-items: center;
@@ -37,7 +37,7 @@
         .closed { background: #f8d7da; color: #721c24; }
         .on-hold { background: #fff3cd; color: #856404; }
         .difficulty {
-            font-size: 20px;
+            font-size: clamp(14px, 2vw, 24px);
             min-width: 30px;
             text-align: center;
             font-weight: bold;
@@ -118,14 +118,14 @@
                 if (!trail || !trail.name) return;
 
                 let statusClass = trail.status.toLowerCase().replace(" ", "-");
-                let groomedIcon = trail.groomed ? `<img src="https://github.com/Max-Pigs/trailliftstatus/blob/main/Groomed.png?raw=true" width="20">` : "";
+                let groomedIcon = trail.groomed ? `<img src="https://github.com/Max-Pigs/trailliftstatus/blob/main/Groomed.png?raw=true" style="width: clamp(14px, 2vw, 24px); height: auto;">` : "";
                 let difficultyName = trail.difficulty ? trail.difficulty.charAt(0).toUpperCase() + trail.difficulty.slice(1).toLowerCase() : 'Unknown';
 let validDifficulties = ['Beginner', 'Novice', 'Intermediate', 'Advanced', 'Expert'];
 let difficultyIcon = (difficultyName === 'Novice') 
-    ? `<img src="https://github.com/Max-Pigs/trailliftstatus/blob/main/Beginner.png?raw=true" width="20">` 
+    ? `<img src="https://github.com/Max-Pigs/trailliftstatus/blob/main/Beginner.png?raw=true" style="width: clamp(14px, 2vw, 24px); height: auto;">` 
     : (validDifficulties.includes(difficultyName) 
-        ? `<img src="https://github.com/Max-Pigs/trailliftstatus/blob/main/${difficultyName}.png?raw=true" width="20">` 
-        : `<img src="https://github.com/Max-Pigs/trailliftstatus/blob/main/Unknown.png?raw=true" width="20">`);
+        ? `<img src="https://github.com/Max-Pigs/trailliftstatus/blob/main/${difficultyName}.png?raw=true" style="width: clamp(14px, 2vw, 24px); height: auto;">` 
+        : `<img src="https://github.com/Max-Pigs/trailliftstatus/blob/main/Unknown.png?raw=true" style="width: clamp(14px, 2vw, 24px); height: auto;">`);
                 
                 trailHTML += `<div class="trail ${statusClass}">
                     ${difficultyIcon} ${trail.name} ${groomedIcon}
