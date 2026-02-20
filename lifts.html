@@ -10,29 +10,34 @@
       text-align: center;
       padding: 10px;
       background-color: #f4f4f4;
+      margin: 0;
     }
+
     #liftStatus {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
       gap: 8px;
       max-width: 95vw;
-      margin: auto;
+      margin: 0 auto;
       padding: 10px;
-      background: white;
+      background: #fff;
       box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
-      border-radius: 5px;
+      border-radius: 8px;
     }
+
     .lift {
       padding: 10px;
-      border-radius: 6px;
+      border-radius: 8px;
       font-size: 18px;
       font-weight: bold;
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 40px;
+      min-height: 44px;
       text-align: center;
+      line-height: 1.1;
     }
+
     .open { background: #d4edda; color: #155724; }
     .closed { background: #f8d7da; color: #721c24; }
     .on-hold { background: #fff3cd; color: #856404; }
@@ -45,116 +50,102 @@
       font-weight: normal;
       margin-left: 8px;
       color: #333;
+      white-space: nowrap;
     }
 
     @media (max-width: 600px) {
-      #liftStatus {
-        grid-template-columns: 1fr;
-        max-width: 90vw;
-      }
-      .lift {
-        font-size: 16px;
-        padding: 8px;
-        min-height: 35px;
-      }
+      #liftStatus { grid-template-columns: 1fr; max-width: 90vw; }
+      .lift { font-size: 16px; padding: 8px; min-height: 40px; }
     }
     @media (max-width: 400px) {
-      .lift {
-        font-size: 14px;
-        padding: 6px;
-      }
-      .lift-type {
-        display: none;
-      }
+      .lift { font-size: 14px; padding: 6px; }
+      .lift-type { display: none; }
     }
   </style>
 </head>
 <body>
-
   <div id="liftStatus">Loading lift data...</div>
 
   <script>
-    // NOTE: API currently requires useReportPal=true
+    // ===== Config =====
     const BASE_URL = "https://snoq.max-4f5.workers.dev/";
-    const API_URL = `${BASE_URL}?useReportPal=true`;
-    const REFRESH_INTERVAL = 300000; // Refresh every 5 minutes
+    const API_URL = `${BASE_URL}?resortName=ss&useReportPal=true`;
+    const REFRESH_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 
-    async function fetchLiftStatus() {
+    // ===== Small helpers =====
+    const toArray = (x) => (Array.isArray(x) ? x : x ? [x] : []);
+
+    const statusToClass = (status) => {
+      const s = (status ?? "unknown").toString().toLowerCase().trim();
+      // Normalize common variations just in case
+      if (s === "on hold") return "on-hold";
+      return s.replace(/\s+/g, "-") || "unknown";
+    };
+
+    const liftTypeLabel = (liftIcon) => {
+      if (!liftIcon) return "";
+      // Example: chairlift-4 -> (4-seat)
+      const m = String(liftIcon).match(/chairlift-(\d+)/i);
+      return m ? `(${m[1]}-seat)` : "";
+    };
+
+    // ===== Render =====
+    function renderLifts(lifts) {
       const el = document.getElementById("liftStatus");
 
-      try {
-        const response = await fetch(API_URL, { cache: "no-store" });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        // If the worker returns an error object, show it clearly
-        if (data?.error) {
-          throw new Error(`API error: ${data.error}`);
-        }
-
-        if (!data?.facilities?.areas || !Array.isArray(data.facilities.areas.area)) {
-          throw new Error("Invalid API response: No lift data found.");
-        }
-
-        const centralLifts = [];
-
-        data.facilities.areas.area.forEach(area => {
-          if (area?.name === "Summit Central" && area?.lifts && Array.isArray(area.lifts.lift)) {
-            area.lifts.lift.forEach(lift => {
-              centralLifts.push({
-                name: lift?.name || "Unnamed Lift",
-                status: lift?.status || "Unknown",
-                type: lift?.liftIcon || ""
-              });
-            });
-          }
-        });
-
-        displayLiftStatus(centralLifts);
-      } catch (error) {
-        console.error("Error fetching lift status:", error);
-        el.innerHTML = `<p style="color: red;">${error.message}</p>`;
-      }
-    }
-
-    function displayLiftStatus(lifts) {
-      const el = document.getElementById("liftStatus");
-
-      if (!lifts || lifts.length === 0) {
+      if (!lifts.length) {
         el.innerHTML = "<p>No lift data available.</p>";
         return;
       }
 
-      const liftHTML = lifts.map(lift => {
-        // Replace ALL whitespace with dashes to handle statuses like "On Hold"
-        const statusClass = lift.status
-          ? String(lift.status).toLowerCase().trim().replace(/\s+/g, "-")
-          : "unknown";
-
-        const liftTypeText = lift.type
-          ? `(${String(lift.type).replace("chairlift-", "")}-seat)`
-          : "";
+      el.innerHTML = lifts.map(lift => {
+        const cls = statusToClass(lift.status);
+        const typeText = liftTypeLabel(lift.type);
 
         return `
-          <div class="lift ${statusClass}">
+          <div class="lift ${cls}">
             ${lift.name}
-            <span class="lift-type">${liftTypeText}</span>
+            ${typeText ? `<span class="lift-type">${typeText}</span>` : ""}
           </div>
         `;
       }).join("");
-
-      el.innerHTML = liftHTML;
     }
 
+    // ===== Fetch + parse =====
+    async function fetchCentralLiftStatus() {
+      const el = document.getElementById("liftStatus");
+
+      try {
+        const res = await fetch(API_URL, { cache: "no-store" });
+        if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
+
+        const data = await res.json();
+        if (data?.error) throw new Error(`API error: ${data.error}`);
+
+        const areas = toArray(data?.facilities?.areas?.area);
+        if (!areas.length) throw new Error("Invalid API response: no areas found.");
+
+        const central = areas.find(a => a?.name === "Summit Central");
+        const lifts = toArray(central?.lifts?.lift);
+
+        const centralLifts = lifts.map(l => ({
+          name: l?.name || "Unnamed Lift",
+          status: l?.status || "Unknown",
+          type: l?.liftIcon || ""
+        }));
+
+        renderLifts(centralLifts);
+      } catch (err) {
+        console.error("Error fetching lift status:", err);
+        el.innerHTML = `<p style="color:red;">${err.message}</p>`;
+      }
+    }
+
+    // ===== Start =====
     document.addEventListener("DOMContentLoaded", () => {
-      fetchLiftStatus();
-      setInterval(fetchLiftStatus, REFRESH_INTERVAL);
+      fetchCentralLiftStatus();
+      setInterval(fetchCentralLiftStatus, REFRESH_INTERVAL_MS);
     });
   </script>
-
 </body>
 </html>
