@@ -26,6 +26,20 @@ html.embed .panel { box-shadow: none; background: transparent; padding: 0; }
 .message { margin: 0; }
 .message.error { color: #b00020; }
 
+/* Resort-status banner and "Updated" footer span the whole panel grid. */
+.banner, .updated { grid-column: 1 / -1; }
+.banner {
+  padding: 10px;
+  border-radius: 8px;
+  font-size: clamp(16px, 2.2vw, 28px);
+  font-weight: bold;
+}
+.updated {
+  margin: 4px 0 0;
+  font-size: clamp(12px, 1.2vw, 16px);
+  color: #666;
+}
+
 /* Status colors, keyed off the API's status text ("On Hold" -> .on-hold). */
 .open      { background: #d4edda; color: #155724; }
 .closed    { background: #f8d7da; color: #721c24; }

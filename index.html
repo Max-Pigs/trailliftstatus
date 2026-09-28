@@ -85,7 +85,7 @@
       if (!trails.length) return showMessage(el, "No trail data available.");
 
       el.innerHTML = trails.map(renderTrail).join("");
-    });
+    }, (data) => data?.trailsUpdated);
   </script>
 </body>
 </html>

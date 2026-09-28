@@ -54,15 +54,43 @@ function showMessage(el, text, isError = false) {
   el.innerHTML = `<p class="message${isError ? " error" : ""}">${escapeHtml(text)}</p>`;
 }
 
+// "Open", "Closed", ... or "" when the feed doesn't say.
+const resortStatus = (data) => String(data?.operations?.resortStatus ?? "").trim();
+const resortIsOpen = (data) => resortStatus(data).toLowerCase() === "open";
+
+// Feed timestamps are UTC; the resort is in Pacific time. -> "Sep 25, 10:03 AM"
+function formatTime(iso) {
+  const d = new Date(iso);
+  if (!iso || isNaN(d)) return "";
+  return d.toLocaleString("en-US", {
+    timeZone: "America/Los_Angeles",
+    month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
+  });
+}
+
+// Banner (resort not open) and "Updated ..." line, as full-width rows of the panel grid.
+function addPageFrame(el, data, updatedAt) {
+  const status = resortStatus(data);
+  if (status && !resortIsOpen(data)) {
+    el.insertAdjacentHTML("afterbegin",
+      `<div class="banner ${statusClass(status)}">Resort ${escapeHtml(status.toLowerCase())}</div>`);
+  }
+  const when = formatTime(updatedAt);
+  if (when) el.insertAdjacentHTML("beforeend", `<p class="updated">Updated ${escapeHtml(when)}</p>`);
+}
+
 // Loads now, then every REFRESH_INTERVAL_MS. `load` receives the resort data.
+// `updatedAt(data)` picks the feed timestamp shown in the footer.
 // A failed refresh keeps the last good render on screen instead of blanking it.
-function startPage(elementId, load) {
+function startPage(elementId, load, updatedAt = (data) => data?.updated) {
   const el = document.getElementById(elementId);
   let hasRendered = false;
 
   async function refresh() {
     try {
-      load(el, await fetchResort());
+      const data = await fetchResort();
+      load(el, data);
+      addPageFrame(el, data, updatedAt(data));
       hasRendered = true;
       if (EMBED) postHeight();
     } catch (err) {

@@ -29,6 +29,10 @@
     .weather-entry p { margin: 4px 0; }
     .label { font-weight: bold; }
 
+    /* Resort closed: the feed keeps the last numbers it had, which can be months old. */
+    .stale .weather-entry { opacity: 0.6; }
+    .stale-note { grid-column: 1 / -1; margin: 0; font-style: italic; color: #555; }
+
     @media (max-width: 600px) {
       body { padding: 5px; }
       .weather-entry { padding: 8px; font-size: 14px; }
@@ -56,7 +60,11 @@
       const locations = toArray(data?.currentConditions?.resortLocations?.location);
       if (!locations.length) return showMessage(el, "Weather data unavailable.");
 
-      el.innerHTML = locations.map(renderLocation).join("");
+      const stale = !resortIsOpen(data);
+      el.classList.toggle("stale", stale);
+      el.innerHTML =
+        (stale ? `<p class="stale-note">Last reported conditions. May be out of date while the resort is closed.</p>` : "") +
+        locations.map(renderLocation).join("");
     });
   </script>
 </body>

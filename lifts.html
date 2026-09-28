@@ -71,7 +71,7 @@
       if (!lifts.length) return showMessage(el, "No lift data available.");
 
       el.innerHTML = lifts.map(renderLift).join("");
-    });
+    }, (data) => data?.liftsUpdated);
   </script>
 </body>
 </html>
