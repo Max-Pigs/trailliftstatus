@@ -8,6 +8,8 @@ Live status boards for Summit at Snoqualmie, served by GitHub Pages from `main`:
 | `index.html` | `/trailliftstatus/` | Summit Central trails, Beginner → Expert then A–Z: open / closed / on hold, groomed |
 | `lifts.html` | `/trailliftstatus/lifts.html` | Summit Central lifts and their status |
 | `forecast.html` | `/trailliftstatus/forecast.html` | Snoqualmie Pass forecast (NWS): next 6 periods, new snow 24h/48h, snow level, plus NWAC avalanche danger |
+| `pass.html` | `/trailliftstatus/pass.html` | I-90 Snoqualmie Pass: highway strip, chosen WSDOT cams west to east (refresh every minute), eastbound/westbound restrictions |
+| `cameras.html` | `/trailliftstatus/cameras.html` | Not for signage: a map of the I-90 cams for choosing which ones `pass.html` shows |
 | `weather.html` | `/trailliftstatus/weather.html` | Snow Conditions: base depth, 24h snow and surface for each base area |
 
 The same pages run on the digital signage screens (Yodeck, portrait or landscape)
@@ -57,6 +59,19 @@ in this repo.
 - `*.png`: difficulty and groomed icons. The feed calls green runs `novice`, which uses `Beginner.png`.
 
 To show a different area, change `AREA` near the top of the script in `index.html` or `lifts.html`.
+
+## I-90 cameras and road report
+
+- **Which cams show:** `cameras.js` lists camera ids. Open `cameras.html`, tick cams on the map or list,
+  press Copy, and paste over the `SHOWN_CAMERAS` line in `cameras.js`. The page sorts them west to east
+  and picks the column count that makes the images largest.
+- **Camera catalog:** `data/i90-cameras.json` holds every active I-90 cam from North Bend to
+  Ellensburg (name, milepost, location, image URL). Refresh it when WSDOT adds cams:
+  `WSDOT_ACCESS_CODE=... python3 scripts/update_cameras.py`, then commit the JSON.
+- **Road report:** WSDOT needs an access code and blocks browser requests, so `pass.html` reads it
+  through a separate Cloudflare worker, `worker/wsdot.js`. Setup steps are at the top of that file.
+  Then put the worker's URL in `WSDOT_WORKER_URL` in `pass.html`. Until then the page shows cams only.
+  Never commit the access code; it lives only in the worker's secret.
 
 ## Editing
 

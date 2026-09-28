@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>I-90 Camera Picker</title>
+  <!-- Not a signage page: a map for choosing which cams pass.html shows. -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="cameras.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; font-family: Arial, sans-serif; color: #222; background: #f4f4f4; }
+
+    .layout { display: grid; grid-template-columns: 1fr 360px; height: 100vh; }
+    #map { height: 100%; }
+    aside { overflow-y: auto; padding: 16px; background: #fff; border-left: 1px solid #ddd; }
+    @media (max-width: 800px) {
+      .layout { grid-template-columns: 1fr; grid-template-rows: 55vh auto; height: auto; }
+      aside { border-left: 0; }
+    }
+
+    h1 { margin: 0 0 4px; font-size: 20px; }
+    .hint { margin: 0 0 12px; font-size: 13px; color: #555; }
+    h2 { margin: 16px 0 6px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.04em; color: #555; }
+
+    label.cam { display: flex; align-items: center; gap: 8px; padding: 5px 4px; border-radius: 4px; cursor: pointer; font-size: 14px; }
+    label.cam:hover { background: #f0f4f8; }
+    label.cam .mp { margin-left: auto; color: #777; font-size: 12px; }
+
+    .output { margin-top: 16px; padding: 10px; background: #f4f4f4; border-radius: 6px; font-size: 13px; }
+    .output code { display: block; margin: 6px 0; word-break: break-all; }
+    button { font: inherit; padding: 6px 12px; border: 1px solid #888; border-radius: 4px; background: #fff; cursor: pointer; }
+
+    .popup img { display: block; width: 280px; max-width: 70vw; height: auto; margin-top: 6px; border-radius: 4px; }
+    .popup b { font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <div id="map"></div>
+    <aside>
+      <h1>I-90 cameras</h1>
+      <p class="hint">Blue = shown on the I-90 Pass page. Click a marker for its live image. Tick cams to build a new list, then copy it into <code>cameras.js</code> (or send it to Claude).</p>
+      <div id="list">Loading cameras...</div>
+      <div class="output">
+        <b>Your selection</b>
+        <code id="selection"></code>
+        <button id="copy">Copy</button> <span id="copied"></span>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    // The Easton to Cle Elum stretch is left off the map, except cams already on the dashboard.
+    const HIDDEN_SEGMENTS = ["Easton to Cle Elum"];
+
+    const selected = new Set(SHOWN_CAMERAS);
+    const markers = new Map();
+    const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+
+    const map = L.map("map");
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 18,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    }).addTo(map);
+
+    function styleFor(id) {
+      return selected.has(id)
+        ? { radius: 9, color: "#fff", weight: 2, fillColor: "#1565c0", fillOpacity: 1 }
+        : { radius: 6, color: "#fff", weight: 1.5, fillColor: "#888", fillOpacity: 0.9 };
+    }
+
+    function updateSelection() {
+      const ids = [...selected].sort((a, b) => a - b);
+      document.getElementById("selection").textContent = `const SHOWN_CAMERAS = [${ids.join(", ")}];`;
+      for (const [id, m] of markers) {
+        m.setStyle(styleFor(id));
+        if (selected.has(id)) m.bringToFront();
+      }
+      document.querySelectorAll("input[data-id]").forEach((box) => { box.checked = selected.has(Number(box.dataset.id)); });
+    }
+
+    function toggle(id, on) {
+      on ? selected.add(id) : selected.delete(id);
+      updateSelection();
+    }
+
+    fetch(CAMERA_CATALOG_URL).then((r) => r.json()).then((catalog) => {
+      const cams = catalog.filter((c) => !HIDDEN_SEGMENTS.includes(c.segment) || selected.has(c.id));
+
+      // Approximate I-90 by joining the cams west to east.
+      L.polyline(cams.map((c) => [c.lat, c.lon]), { color: "#c62828", weight: 3, opacity: 0.5 }).addTo(map);
+
+      for (const c of cams) {
+        const m = L.circleMarker([c.lat, c.lon], styleFor(c.id)).addTo(map);
+        m.bindTooltip(`${esc(c.name)} · MP ${c.milepost}`);
+        m.bindPopup(() => `<div class="popup">
+            <b>${esc(c.name)}</b> · MP ${c.milepost}<br>
+            <label><input type="checkbox" data-popup="${c.id}" ${selected.has(c.id) ? "checked" : ""}> Show on dashboard</label>
+            <img src="${esc(c.image)}?t=${Date.now()}" alt="${esc(c.name)} camera">
+          </div>`, { maxWidth: 320 });
+        markers.set(c.id, m);
+      }
+      map.fitBounds(L.latLngBounds(cams.map((c) => [c.lat, c.lon])), { padding: [30, 30] });
+
+      map.on("popupopen", (e) => {
+        const box = e.popup.getElement().querySelector("input[data-popup]");
+        box?.addEventListener("change", () => toggle(Number(box.dataset.popup), box.checked));
+      });
+
+      const segments = [...new Set(cams.map((c) => c.segment))];
+      document.getElementById("list").innerHTML = segments.map((s) => `
+        <h2>${esc(s)}</h2>
+        ${cams.filter((c) => c.segment === s).map((c) => `
+          <label class="cam">
+            <input type="checkbox" data-id="${c.id}">
+            <span>${esc(c.name)}</span><span class="mp">MP ${c.milepost}</span>
+          </label>`).join("")}`).join("");
+
+      document.querySelectorAll("input[data-id]").forEach((box) => {
+        box.addEventListener("change", () => toggle(Number(box.dataset.id), box.checked));
+        box.closest("label").addEventListener("mouseenter", () => markers.get(Number(box.dataset.id))?.openTooltip());
+        box.closest("label").addEventListener("mouseleave", () => markers.get(Number(box.dataset.id))?.closeTooltip());
+      });
+      updateSelection();
+    });
+
+    document.getElementById("copy").addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(document.getElementById("selection").textContent);
+        document.getElementById("copied").textContent = "Copied";
+      } catch {
+        document.getElementById("copied").textContent = "Select the text above and copy it";
+      }
+    });
+  </script>
+</body>
+</html>
