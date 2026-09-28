@@ -1,141 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Summit Central Trail & Lift Status</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            padding: 20px;
-            background-color: #f4f4f4;  
-        }
-        #trailStatus {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 10px;
-            max-width: 100%;
-            margin: 0; width: 100vw; height: 100vh;
-            padding: 2vw;
-            background: white;
-            box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
-            border-radius: 5px;
-        }
-        .trail {
-            padding: 12px;
-            border-radius: 8px;
-            font-size: clamp(14px, 2vw, 24px);
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            min-height: 55px;
-            text-align: left;
-        }
-        .open { background: #d4edda; color: #155724; }
-        .closed { background: #f8d7da; color: #721c24; }
-        .on-hold { background: #fff3cd; color: #856404; }
-        .difficulty {
-            font-size: clamp(14px, 2vw, 24px);
-            min-width: 30px;
-            text-align: center;
-            font-weight: bold;
-        }
-        .key {
-            margin-top: 20px;
-            padding: 10px;
-            background: white;
-            box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
-            border-radius: 5px;
-            display: inline-block;
-            text-align: left;
-        }
-        @media (max-width: 768px) {
-            #trailStatus {
-                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            }
-        }
-        @media (max-width: 480px) {
-            #trailStatus {
-                grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Summit Central Trail Status</title>
+  <link rel="stylesheet" href="common.css">
+  <script src="common.js"></script>
+  <style>
+    #trailStatus { --cols: 5; --cols-portrait: 3; --embed-min-col: 180px; }
+  </style>
 </head>
 <body>
-    
-    <div id="trailStatus">Loading trail data...</div>
-    
-    
-    
-    <script>
-        async function fetchTrailStatus() {
-            try {
-                let response = await fetch("https://snoq.max-4f5.workers.dev/");
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
+  <header class="page-head">
+    <h1>Summit Central Trails</h1>
+    <div class="page-status"></div>
+  </header>
 
-                let data = await response.json();
-                
-                if (!data || !data.facilities || !data.facilities.areas || !data.facilities.areas.area) {
-                    throw new Error("Invalid API response: No trail data found.");
-                }
+  <div id="trailStatus" class="panel">Loading trail data...</div>
 
-                let centralTrails = [];
-                data.facilities.areas.area.forEach(area => {
-                    if (area.name === "Summit Central" && area.trails && area.trails.trail) {
-                        area.trails.trail.forEach(trail => {
-                            centralTrails.push({
-                                name: trail.name,
-                                status: trail.status,
-                                groomed: trail.groomed === true,
-                                difficulty: trail.difficulty || "unknown"
-                            });
-                        });
-                    }
-                });
+  <footer class="page-foot">
+    <div class="legend"></div>
+    <span class="updated"></span>
+  </footer>
 
-                displayTrailStatus(centralTrails);
-            } catch (error) {
-                console.error("Error fetching trail status:", error);
-                document.getElementById("trailStatus").innerHTML = `<p style="color: red;">Error loading data. Please try again.</p>`;
-            }
-        }
+  <script>
+    const AREA = "Summit Central";
 
-        function displayTrailStatus(trails) {
-    console.log('Trail data received:', trails);
-            if (!trails || trails.length === 0) {
-                document.getElementById("trailStatus").innerHTML = "<p>No trail data available.</p>";
-                return;
-            }
+    // The feed uses "novice" for green runs; our icon for that is Beginner.png.
+    const DIFFICULTIES = [
+      { keys: ["novice", "beginner"], icon: "Beginner.png", label: "Beginner" },
+      { keys: ["intermediate"], icon: "Intermediate.png", label: "Intermediate" },
+      { keys: ["advanced"], icon: "Advanced.png", label: "Advanced" },
+      { keys: ["expert"], icon: "Expert.png", label: "Expert" },
+    ];
+    const difficultyOf = (trail) =>
+      DIFFICULTIES.find((d) => d.keys.includes(String(trail.difficulty ?? "").toLowerCase()));
 
-            let trailHTML = "";
-            trails.forEach(trail => {
-        console.log(`Trail: ${trail.name}, Difficulty: ${trail.difficulty}`);
-                if (!trail || !trail.name) return;
+    const img = (src, alt) => `<img class="icon" src="${src}" alt="${escapeHtml(alt)}">`;
 
-                let statusClass = trail.status.toLowerCase().replace(" ", "-");
-                let groomedIcon = trail.groomed ? `<img src="https://github.com/Max-Pigs/trailliftstatus/blob/main/Groomed.png?raw=true" style="width: clamp(14px, 2vw, 24px); height: auto;">` : "";
-                let difficultyName = trail.difficulty ? trail.difficulty.charAt(0).toUpperCase() + trail.difficulty.slice(1).toLowerCase() : 'Unknown';
-let validDifficulties = ['Beginner', 'Novice', 'Intermediate', 'Advanced', 'Expert'];
-let difficultyIcon = (difficultyName === 'Novice') 
-    ? `<img src="https://github.com/Max-Pigs/trailliftstatus/blob/main/Beginner.png?raw=true" style="width: clamp(14px, 2vw, 24px); height: auto;">` 
-    : (validDifficulties.includes(difficultyName) 
-        ? `<img src="https://github.com/Max-Pigs/trailliftstatus/blob/main/${difficultyName}.png?raw=true" style="width: clamp(14px, 2vw, 24px); height: auto;">` 
-        : `<img src="https://github.com/Max-Pigs/trailliftstatus/blob/main/Unknown.png?raw=true" style="width: clamp(14px, 2vw, 24px); height: auto;">`);
-                
-                trailHTML += `<div class="trail ${statusClass}">
-                    ${difficultyIcon} ${trail.name} ${groomedIcon}
-                </div>`;
-            });
+    function renderTrail(trail) {
+      const d = difficultyOf(trail);
+      return `<div class="tile trail ${statusClass(trail.status)}">
+        ${d ? img(d.icon, d.label) : `<span class="icon"></span>`}
+        <span class="name">${escapeHtml(trail.name)}</span>
+        ${trail.groomed === true ? img("Groomed.png", "Groomed") : ""}
+        ${statusMark(trail.status)}
+      </div>`;
+    }
 
-            document.getElementById("trailStatus").innerHTML = trailHTML;
-        }
+    // Key for the difficulties on this board, plus groomed and the status marks.
+    function renderLegend(trails) {
+      const shown = DIFFICULTIES.filter((d) => trails.some((t) => difficultyOf(t) === d));
+      document.querySelector(".legend").innerHTML =
+        shown.map((d) => `<span>${img(d.icon, "")} ${d.label}</span>`).join("") +
+        `<span>${img("Groomed.png", "")} Groomed</span>` +
+        `<span>✓ Open</span><span>✕ Closed</span><span>‖ On hold</span>`;
+    }
 
-        document.addEventListener("DOMContentLoaded", fetchTrailStatus);
-    </script>
+    startPage("trailStatus", (el, data) => {
+      const area = findArea(data, AREA);
+      if (!area) throw new Error(`No "${AREA}" area in the feed.`);
+
+      const trails = toArray(area.trails?.trail).filter((t) => t?.name);
+      if (!trails.length) return showMessage(el, "No trail data available.");
+
+      // Beginner -> Expert (unknown difficulty last), then A-Z within each.
+      const rank = (t) => {
+        const r = DIFFICULTIES.indexOf(difficultyOf(t));
+        return r === -1 ? DIFFICULTIES.length : r;
+      };
+      trails.sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name));
+
+      el.innerHTML = trails.map(renderTrail).join("");
+      renderLegend(trails);
+      return `${trails.filter(isOpen).length} of ${trails.length} trails open`;
+    }, (data) => data?.trailsUpdated);
+  </script>
 </body>
 </html>

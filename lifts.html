@@ -1,151 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Summit Central Lift Status</title>
+  <link rel="stylesheet" href="common.css">
+  <script src="common.js"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding: 10px;
-      background-color: #f4f4f4;
-      margin: 0;
-    }
-
-    #liftStatus {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 8px;
-      max-width: 95vw;
-      margin: 0 auto;
-      padding: 10px;
-      background: #fff;
-      box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
-      border-radius: 8px;
-    }
+    #liftStatus { --cols: 4; --cols-portrait: 2; --embed-min-col: 160px; }
 
     .lift {
-      padding: 10px;
-      border-radius: 8px;
-      font-size: 18px;
-      font-weight: bold;
-      display: flex;
-      align-items: center;
+      flex-direction: column;
       justify-content: center;
-      min-height: 44px;
+      gap: 0.2em;
       text-align: center;
-      line-height: 1.1;
+      font-size: 1.4rem;
     }
-
-    .open { background: #d4edda; color: #155724; }
-    .closed { background: #f8d7da; color: #721c24; }
-    .on-hold { background: #fff3cd; color: #856404; }
-    .delayed { background: #ffeeba; color: #856404; }
-    .scheduled { background: #d1ecf1; color: #0c5460; }
-    .unknown { background: #e2e3e5; color: #6c757d; }
-
-    .lift-type {
-      font-size: 14px;
-      font-weight: normal;
-      margin-left: 8px;
-      color: #333;
-      white-space: nowrap;
-    }
-
-    @media (max-width: 600px) {
-      #liftStatus { grid-template-columns: 1fr; max-width: 90vw; }
-      .lift { font-size: 16px; padding: 8px; min-height: 40px; }
-    }
-    @media (max-width: 400px) {
-      .lift { font-size: 14px; padding: 6px; }
-      .lift-type { display: none; }
-    }
+    .lift .meta { font-size: 0.65em; font-weight: normal; }
+    html.embed .lift { font-size: 1.1rem; }
   </style>
 </head>
 <body>
-  <div id="liftStatus">Loading lift data...</div>
+  <header class="page-head">
+    <h1>Summit Central Lifts</h1>
+    <div class="page-status"></div>
+  </header>
+
+  <div id="liftStatus" class="panel">Loading lift data...</div>
+
+  <footer class="page-foot">
+    <span></span>
+    <span class="updated"></span>
+  </footer>
 
   <script>
-    // ===== Config =====
-    const BASE_URL = "https://snoq.max-4f5.workers.dev/";
-    const API_URL = `${BASE_URL}?resortName=ss&useReportPal=true`;
-    const REFRESH_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+    const AREA = "Summit Central";
 
-    // ===== Small helpers =====
-    const toArray = (x) => (Array.isArray(x) ? x : x ? [x] : []);
-
-    const statusToClass = (status) => {
-      const s = (status ?? "unknown").toString().toLowerCase().trim();
-      // Normalize common variations just in case
-      if (s === "on hold") return "on-hold";
-      return s.replace(/\s+/g, "-") || "unknown";
-    };
-
-    const liftTypeLabel = (liftIcon) => {
-      if (!liftIcon) return "";
-      // Example: chairlift-4 -> (4-seat)
-      const m = String(liftIcon).match(/chairlift-(\d+)/i);
-      return m ? `(${m[1]}-seat)` : "";
-    };
-
-    // ===== Render =====
-    function renderLifts(lifts) {
-      const el = document.getElementById("liftStatus");
-
-      if (!lifts.length) {
-        el.innerHTML = "<p>No lift data available.</p>";
-        return;
-      }
-
-      el.innerHTML = lifts.map(lift => {
-        const cls = statusToClass(lift.status);
-        const typeText = liftTypeLabel(lift.type);
-
-        return `
-          <div class="lift ${cls}">
-            ${lift.name}
-            ${typeText ? `<span class="lift-type">${typeText}</span>` : ""}
-          </div>
-        `;
-      }).join("");
+    // "chairlift-4" -> "4-seat chair", "magic-carpet" -> "Carpet"
+    function liftTypeLabel(liftIcon) {
+      const icon = String(liftIcon ?? "");
+      const m = icon.match(/chairlift-(\d+)/i);
+      if (m) return `${m[1]}-seat chair`;
+      if (/carpet/i.test(icon)) return "Carpet";
+      return "";
     }
 
-    // ===== Fetch + parse =====
-    async function fetchCentralLiftStatus() {
-      const el = document.getElementById("liftStatus");
-
-      try {
-        const res = await fetch(API_URL, { cache: "no-store" });
-        if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
-
-        const data = await res.json();
-        if (data?.error) throw new Error(`API error: ${data.error}`);
-
-        const areas = toArray(data?.facilities?.areas?.area);
-        if (!areas.length) throw new Error("Invalid API response: no areas found.");
-
-        const central = areas.find(a => a?.name === "Summit Central");
-        const lifts = toArray(central?.lifts?.lift);
-
-        const centralLifts = lifts.map(l => ({
-          name: l?.name || "Unnamed Lift",
-          status: l?.status || "Unknown",
-          type: l?.liftIcon || ""
-        }));
-
-        renderLifts(centralLifts);
-      } catch (err) {
-        console.error("Error fetching lift status:", err);
-        el.innerHTML = `<p style="color:red;">${err.message}</p>`;
-      }
+    function renderLift(lift) {
+      const meta = [lift.status || "Unknown", liftTypeLabel(lift.liftIcon)].filter(Boolean).join(" · ");
+      return `<div class="tile lift ${statusClass(lift.status)}">
+        <span class="name">${escapeHtml(lift.name || "Unnamed Lift")}</span>
+        <span class="meta">${escapeHtml(meta)}</span>
+      </div>`;
     }
 
-    // ===== Start =====
-    document.addEventListener("DOMContentLoaded", () => {
-      fetchCentralLiftStatus();
-      setInterval(fetchCentralLiftStatus, REFRESH_INTERVAL_MS);
-    });
+    startPage("liftStatus", (el, data) => {
+      const area = findArea(data, AREA);
+      if (!area) throw new Error(`No "${AREA}" area in the feed.`);
+
+      const lifts = toArray(area.lifts?.lift);
+      if (!lifts.length) return showMessage(el, "No lift data available.");
+
+      el.innerHTML = lifts.map(renderLift).join("");
+      return `${lifts.filter(isOpen).length} of ${lifts.length} lifts open`;
+    }, (data) => data?.liftsUpdated);
   </script>
 </body>
 </html>

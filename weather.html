@@ -1,101 +1,72 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Summit at Snoqualmie Weather</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            padding: 15px;
-            background-color: #f4f4f4;
-        }
-        #weather-status {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Responsive grid */
-            gap: 10px;
-            max-width: 800px;
-            margin: auto;
-            padding: 10px;
-            background: white;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            border-radius: 5px;
-        }
-        .weather-entry {
-            background: #e3f2fd;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 16px;
-            text-align: left;
-            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
-        }
-        .weather-entry h3 {
-            font-size: 18px;
-            margin-bottom: 5px;
-        }
-        .label {
-            font-weight: bold;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Snow Conditions</title>
+  <link rel="stylesheet" href="common.css">
+  <script src="common.js"></script>
+  <style>
+    #weatherStatus { --cols: 3; --cols-portrait: 2; --embed-min-col: 200px; }
 
-        /* Reduce padding & font size on smaller screens */
-        @media (max-width: 600px) {
-            body {
-                padding: 5px;
-            }
-            .weather-entry {
-                padding: 8px;
-                font-size: 14px;
-            }
-            .weather-entry h3 {
-                font-size: 16px;
-            }
-        }
-    </style>
+    .weather-entry {
+      padding: 0.6em 0.8em;
+      border-radius: 0.5rem;
+      background: #e3f2fd;
+      font-size: 1.1rem;
+    }
+    html.embed .weather-entry { font-size: 1rem; }
+
+    .weather-entry h3 { margin: 0 0 0.3em; font-size: 1.2em; }
+    .weather-entry p { margin: 0.2em 0; }
+    .label { font-weight: bold; }
+
+    /* Resort closed: the feed keeps the last numbers it had, which can be months old. */
+    .stale .weather-entry { opacity: 0.6; }
+    .stale-note { grid-column: 1 / -1; margin: 0; font-style: italic; color: #555; font-size: 0.9rem; }
+    html:not(.embed) .stale { grid-template-rows: auto; }  /* note row hugs its text */
+  </style>
 </head>
 <body>
+  <header class="page-head">
+    <h1>Snow Conditions</h1>
+    <div class="page-status"></div>
+  </header>
 
-    <div id="weather-status">Loading weather data...</div>
+  <div id="weatherStatus" class="panel">Loading snow conditions...</div>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const weatherDiv = document.getElementById("weather-status");
+  <footer class="page-foot">
+    <span></span>
+    <span class="updated"></span>
+  </footer>
 
-            fetch("https://snoq.max-4f5.workers.dev/")
-                .then(response => response.json())
-                .then(data => {
-                    if (!data.currentConditions || !data.currentConditions.resortLocations) {
-                        weatherDiv.textContent = "Weather data unavailable";
-                        return;
-                    }
+  <script>
+    const inches = (m) => (m?.inches != null && m.inches !== "" ? `${m.inches} inches` : "");
 
-                    const locations = data.currentConditions.resortLocations.location;
-                    let weatherHTML = "";
+    // Rows with no value are left out rather than shown as "N/A".
+    function renderLocation(loc) {
+      const rows = [
+        ["Base Depth", inches(loc.base)],
+        ["Snow (Last 24h)", inches(loc.snow24Hours)],
+        ["Surface", [loc.primarySurface, loc.secondarySurface].filter(Boolean).join(", ")],
+      ].filter(([, value]) => value);
+      return `<div class="weather-entry">
+        <h3>${escapeHtml(loc.name)}</h3>
+        ${rows.map(([label, value]) =>
+          `<p><span class="label">${label}:</span> ${escapeHtml(value)}</p>`).join("")}
+      </div>`;
+    }
 
-                    locations.forEach(location => {
-                        const baseDepth = location.base ? `${location.base.inches} inches` : "N/A";
-                        const snow24h = location.snow24Hours ? `${location.snow24Hours.inches} inches` : "N/A";
-                        const surfaceCondition = location.primarySurface ? location.primarySurface : "N/A";
-                        const secondarySurface = location.secondarySurface ? location.secondarySurface : "N/A";
-                        
-                        weatherHTML += `
-                            <div class="weather-entry">
-                                <h3>${location.name}</h3>
-                                <p><span class="label">Base Depth:</span> ${baseDepth}</p>
-                                <p><span class="label">Snow (Last 24h):</span> ${snow24h}</p>
-                                <p><span class="label">Surface:</span> ${surfaceCondition}, ${secondarySurface}</p>
-                            </div>
-                        `;
-                    });
+    startPage("weatherStatus", (el, data) => {
+      const locations = toArray(data?.currentConditions?.resortLocations?.location);
+      if (!locations.length) return showMessage(el, "Snow conditions unavailable.");
 
-                    weatherDiv.innerHTML = weatherHTML;
-                })
-                .catch(error => {
-                    console.error("Error fetching weather data:", error);
-                    weatherDiv.textContent = "Failed to load weather data.";
-                });
-        });
-    </script>
-
+      const stale = !resortIsOpen(data);
+      el.classList.toggle("stale", stale);
+      el.innerHTML =
+        (stale ? `<p class="stale-note">Last reported conditions. May be out of date while the resort is closed.</p>` : "") +
+        locations.map(renderLocation).join("");
+    });
+  </script>
 </body>
 </html>
