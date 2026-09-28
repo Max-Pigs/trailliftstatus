@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NWS Hourly · Snoqualmie Pass</title>
+  <link rel="stylesheet" href="common.css">
+  <script src="common.js"></script>
+  <script src="nws.js"></script>
+  <style>
+    /* Small multiples: one chart per measure, stacked on a shared 48-hour time axis. */
+    #hourly {
+      --cols: 1; --cols-portrait: 1; --embed-min-col: 100%;
+      position: relative;
+      --series-1: #2a78d6;  /* wind, and every single-series chart */
+      --series-2: #eb6834;  /* gusts */
+      --ink: #222; --ink-2: #555; --ink-3: #777; --grid: #e6e6e6; --grid-strong: #c9c9c9; --surface: #fff;
+    }
+    html.embed #hourly { grid-template-columns: 1fr; }
+    /* Two columns of three (summary first) unless the screen is truly tall (narrower
+       than 3:4, e.g. a portrait TV); then one column. Near-square zones stay two-column. */
+    html:not(.embed) #hourly { grid-template-rows: repeat(3, 1fr); grid-auto-flow: column; }
+    @media (min-aspect-ratio: 3/4) { html:not(.embed) #hourly { --cols: 2; --cols-portrait: 2; } }
+    @media (max-aspect-ratio: 3/4) {
+      html:not(.embed) #hourly { grid-template-rows: none; grid-auto-flow: row; grid-auto-rows: auto repeat(5, 1fr); }
+    }
+
+    .summary-card { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; align-content: center; }
+    .stat { padding: 0.4em 0.6em; border-radius: 0.5rem; background: #f1f3f5; }
+    .stat .k { font-size: 0.7rem; color: var(--ink-2); }
+    .stat .v { font-size: 1.4rem; font-weight: bold; line-height: 1.15; }
+
+    .chart { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+    .chart-head { display: flex; align-items: baseline; gap: 1em; font-size: 0.8rem; }
+    .chart-head h2 { margin: 0; font-size: 1em; }
+    .legend-key { display: inline-flex; align-items: center; gap: 0.35em; color: var(--ink-2); }
+    .legend-key i { display: inline-block; width: 1.2em; height: 0.2em; border-radius: 1px; }
+    .plot { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+    html.embed .plot { flex: none; height: 150px; }
+    .plot svg { position: absolute; inset: 0; display: block; }
+
+    .tip {
+      position: absolute; z-index: 2; pointer-events: none; display: none;
+      padding: 0.5em 0.7em; border-radius: 0.4rem; background: #fff; color: var(--ink);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.18); font-size: 13px; line-height: 1.45; white-space: nowrap;
+    }
+    .tip b { display: block; margin-bottom: 0.2em; }
+    .tip .sw { display: inline-block; width: 0.7em; height: 0.7em; margin-right: 0.4em; border-radius: 2px; }
+
+    details.table-view { grid-column: 1 / -1; font-size: 13px; }
+    html:not(.embed) details.table-view { display: none; }
+    .table-view table { border-collapse: collapse; margin-top: 0.5em; }
+    .table-view th, .table-view td { padding: 2px 8px; border-bottom: 1px solid var(--grid); text-align: right; }
+  </style>
+</head>
+<body>
+  <header class="page-head">
+    <h1>NWS Hourly · Snoqualmie Pass</h1>
+    <div class="page-status"></div>
+  </header>
+
+  <div id="hourly" class="panel">Loading hourly forecast...</div>
+
+  <footer class="page-foot">
+    <span>National Weather Service, Seattle · next 48 hours</span>
+    <span class="updated"></span>
+  </footer>
+
+  <script>
+    const HOURS = 48;
+    const PASS_FT = 3022;
+    const TZ = "America/Los_Angeles";
+
+    // ===== Grid data -> hourly arrays =====
+
+    // "PT3H" -> 3, "P1DT3H" -> 27
+    function durationHours(iso) {
+      const m = /P(?:(\d+)D)?(?:T(?:(\d+)H)?)?/.exec(iso ?? "") ?? [];
+      return (Number(m[1] || 0) * 24 + Number(m[2] || 0)) || 1;
+    }
+
+    // A value covering several hours is repeated for each of them.
+    function toHourly(series, t0, convert) {
+      const out = Array(HOURS).fill(null);
+      for (const v of toArray(series?.values)) {
+        if (v.value == null) continue;
+        const [start, dur] = v.validTime.split("/");
+        const s = Date.parse(start);
+        for (let h = 0; h < durationHours(dur); h++) {
+          const i = Math.round((s + h * 3600e3 - t0) / 3600e3);
+          if (i >= 0 && i < HOURS) out[i] = convert(v.value);
+        }
+      }
+      return out;
+    }
+
+    // Totals over a period (new snow per 6h) stay as bins: { from, to, value }.
+    function toBins(series, t0, convert) {
+      return toArray(series?.values).filter((v) => v.value != null).map((v) => {
+        const [start, dur] = v.validTime.split("/");
+        const from = Math.round((Date.parse(start) - t0) / 3600e3);
+        return { from, to: from + durationHours(dur), value: convert(v.value) };
+      }).filter((b) => b.to > 0 && b.from < HOURS)
+        .map((b) => ({ ...b, from: Math.max(b.from, 0), to: Math.min(b.to, HOURS) }));
+    }
+
+    const cToF = (c) => c * 9 / 5 + 32;
+    const kmhToMph = (k) => k / 1.609344;
+    const mToFt = (m) => m * 3.28084;
+    const mmToIn = (mm) => mm / 25.4;
+    const round100 = (ft) => Math.round(ft / 100) * 100;
+
+    function buildCharts(grid) {
+      const p = grid.properties;
+      const t0 = Math.floor(Date.now() / 3600e3) * 3600e3; // start of the current hour
+      const snowBins = toBins(p.snowfallAmount, t0, mmToIn);
+      return {
+        t0,
+        charts: [
+          { key: "temp", title: "Temperature", unit: "°F", type: "line",
+            series: [{ name: "Temperature", values: toHourly(p.temperature, t0, cToF) }],
+            ref: { value: 32, label: "Freezing 32°" }, fmt: (v) => `${Math.round(v)}°`, label: ["max", "min"] },
+          { key: "pop", title: "Chance of precipitation", unit: "%", type: "bars", domain: [0, 100],
+            series: [{ name: "Chance", values: toHourly(p.probabilityOfPrecipitation, t0, (v) => v) }],
+            fmt: (v) => `${Math.round(v)}%`, label: ["max"] },
+          { key: "snow", title: "New snow per 6 hours", unit: "in", type: "bins", bins: snowBins,
+            fmt: (v) => (v > 0 && v < 0.1 ? "Trace" : `${v.toFixed(1)}"`), empty: "No snow in the forecast" },
+          { key: "level", title: "Snow level", unit: "ft", type: "line",
+            series: [{ name: "Snow level", values: toHourly(p.snowLevel, t0, (m) => round100(mToFt(m))) }],
+            ref: { value: PASS_FT, label: `Pass ${PASS_FT.toLocaleString()} ft` },
+            fmt: (v) => `${Math.round(v).toLocaleString()} ft`, label: ["min"] },
+          { key: "wind", title: "Wind", unit: "mph", type: "line",
+            series: [
+              { name: "Wind", values: toHourly(p.windSpeed, t0, kmhToMph), color: "var(--series-1)" },
+              { name: "Gusts", values: toHourly(p.windGust, t0, kmhToMph), color: "var(--series-2)" },
+            ],
+            fmt: (v) => `${Math.round(v)} mph`, label: ["max"], labelSeries: 1, domainMin: 0 },
+        ],
+      };
+    }
+
+    // ===== Drawing =====
+
+    const hourOf = (t) => Number(new Intl.DateTimeFormat("en-US", { hour: "numeric", hour12: false, timeZone: TZ }).format(t)) % 24;
+    const dayOf = (t) => new Intl.DateTimeFormat("en-US", { weekday: "short", timeZone: TZ }).format(t);
+    const timeLabel = (t) => new Intl.DateTimeFormat("en-US", { weekday: "short", hour: "numeric", timeZone: TZ }).format(t);
+
+    function niceStep(span, count) {
+      const raw = span / count, mag = 10 ** Math.floor(Math.log10(raw)), n = raw / mag;
+      return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * mag;
+    }
+
+    function domainFor(chart, ticks = 3) {
+      if (chart.domain) return [...chart.domain, niceStep(chart.domain[1] - chart.domain[0], ticks)];
+      const vals = chart.type === "bins" ? chart.bins.map((b) => b.value)
+        : chart.series.flatMap((s) => s.values).filter((v) => v != null);
+      if (chart.ref) vals.push(chart.ref.value);
+      let lo = Math.min(...vals), hi = Math.max(...vals);
+      if (chart.type === "bins") { lo = 0; hi = Math.max(hi, 1); }
+      if (chart.domainMin != null) lo = Math.min(lo, chart.domainMin);
+      if (hi - lo < 1e-9) hi = lo + 1;
+      const step = niceStep(hi - lo, ticks);
+      return [Math.floor(lo / step) * step, Math.ceil(hi / step) * step, step];
+    }
+
+    function drawChart(plotEl, chart, t0, showTimeAxis) {
+      const W = plotEl.clientWidth, H = plotEl.clientHeight;
+      if (!W || !H) return;
+      const fs = Math.max(11, parseFloat(getComputedStyle(document.documentElement).fontSize) * 0.65);
+      const stroke = Math.max(2, fs / 7);
+      const m = { l: 0, r: fs * 3.4, t: fs * 1.0, b: showTimeAxis ? fs * 1.8 : fs * 0.8 };
+      const ph = H - m.t - m.b;
+      // As many value ticks as fit without crowding (1-3).
+      const ticks = Math.max(1, Math.min(3, Math.floor(ph / (fs * 1.6))));
+      const [lo, hi, step] = domainFor(chart, ticks);
+      // Left margin fits the widest tick label ("15,000").
+      const tickValues = [];
+      for (let v = lo; v <= hi + 1e-9; v += step) tickValues.push(v);
+      const widest = Math.max(...tickValues.map((v) => v.toLocaleString().length));
+      m.l = widest * fs * 0.6 + fs * 0.7;
+      const pw = W - m.l - m.r;
+      const slot = pw / HOURS;
+      const x = (i) => m.l + (i + 0.5) * slot;
+      const y = (v) => m.t + ph - ((v - lo) / (hi - lo)) * ph;
+      const parts = [];
+
+      // Hour grid: a line every 6 hours, stronger at midnight; time labels on the bottom chart.
+      for (let i = 0; i < HOURS; i++) {
+        const t = t0 + i * 3600e3, h = hourOf(t);
+        if (h % 6) continue;
+        const gx = m.l + i * slot;
+        parts.push(`<line x1="${gx}" x2="${gx}" y1="${m.t}" y2="${m.t + ph}" stroke="${h === 0 ? "var(--grid-strong)" : "var(--grid)"}" stroke-width="1"/>`);
+        if (showTimeAxis) {
+          const label = h === 0 ? dayOf(t) : h === 12 ? "Noon" : h === 6 ? "6a" : "6p";
+          parts.push(`<text x="${gx}" y="${H - fs * 0.35}" font-size="${fs}" fill="${h === 0 ? "var(--ink)" : "var(--ink-3)"}" font-weight="${h === 0 ? "bold" : "normal"}" text-anchor="middle">${label}</text>`);
+        }
+      }
+      // Value axis: recessive gridlines and ticks.
+      for (const v of tickValues) {
+        parts.push(`<line x1="${m.l}" x2="${m.l + pw}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)" stroke-width="1"/>
+          <text x="${m.l - fs * 0.4}" y="${y(v) + fs * 0.35}" font-size="${fs}" fill="var(--ink-3)" text-anchor="end">${v.toLocaleString()}</text>`);
+      }
+      if (chart.ref && chart.ref.value >= lo && chart.ref.value <= hi) {
+        const ry = y(chart.ref.value);
+        parts.push(`<line x1="${m.l}" x2="${m.l + pw}" y1="${ry}" y2="${ry}" stroke="var(--ink-3)" stroke-width="1.5" stroke-dasharray="6 4"/>
+          <text x="${m.l + pw - fs * 0.3}" y="${ry - fs * 0.35}" font-size="${fs * 0.9}" fill="var(--ink-2)" text-anchor="end"
+            paint-order="stroke" stroke="var(--surface)" stroke-width="3">${escapeHtml(chart.ref.label)}</text>`);
+      }
+
+      // A bar with 4px rounded top corners, anchored to the baseline.
+      const bar = (x0, x1, v, fill) => {
+        const top = y(v), base = y(lo), r = Math.min(4, (x1 - x0) / 2, base - top);
+        if (base - top < 0.5) return "";
+        return `<path d="M${x0},${base} V${top + r} Q${x0},${top} ${x0 + r},${top} H${x1 - r} Q${x1},${top} ${x1},${top + r} V${base} Z" fill="var(--series-1)"/>`;
+      };
+
+      if (chart.type === "bars") {
+        chart.series[0].values.forEach((v, i) => {
+          if (v) parts.push(bar(m.l + i * slot + 1, m.l + (i + 1) * slot - 1, v));
+        });
+      } else if (chart.type === "bins") {
+        for (const b of chart.bins) parts.push(bar(m.l + b.from * slot + 1, m.l + b.to * slot - 1, b.value));
+        if (!chart.bins.some((b) => b.value >= 0.05)) {
+          parts.push(`<text x="${m.l + pw / 2}" y="${m.t + ph / 2 + fs * 0.35}" font-size="${fs * 1.1}" fill="var(--ink-2)" text-anchor="middle">${chart.empty}</text>`);
+        }
+      } else {
+        chart.series.forEach((s) => {
+          let d = "", pen = false;
+          s.values.forEach((v, i) => {
+            if (v == null) { pen = false; return; }
+            d += `${pen ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`;
+            pen = true;
+          });
+          parts.push(`<path d="${d}" fill="none" stroke="${s.color ?? "var(--series-1)"}" stroke-width="${stroke}" stroke-linejoin="round" stroke-linecap="round"/>`);
+          // Two series: name each at its line end (the legend repeats them).
+          if (chart.series.length > 1) {
+            const last = s.values.findLastIndex((v) => v != null);
+            if (last >= 0) parts.push(`<text x="${x(last) + fs * 0.4}" y="${y(s.values[last]) + fs * 0.35}" font-size="${fs * 0.9}" fill="var(--ink-2)">${s.name}</text>`);
+          }
+        });
+      }
+
+      // Selective labels: only the high / low / peak gets a number.
+      const labelled = chart.type === "bins"
+        ? (() => { const b = chart.bins.reduce((a, c) => (c.value > (a?.value ?? 0) ? c : a), null);
+                   return b && b.value >= 0.05 ? [{ i: (b.from + b.to) / 2 - 0.5, v: b.value, bar: true }] : []; })()
+        : (chart.label ?? []).map((kind) => {
+            const vals = chart.series[chart.labelSeries ?? 0].values;
+            let best = -1;
+            vals.forEach((v, i) => { if (v != null && (best < 0 || (kind === "max" ? v > vals[best] : v < vals[best]))) best = i; });
+            return best >= 0 ? { i: best, v: vals[best], kind, bar: chart.type === "bars" } : null;
+          }).filter(Boolean);
+      for (const L of labelled) {
+        const lx = x(L.i), ly = y(L.v), above = L.kind !== "min";
+        if (!L.bar) parts.push(`<circle cx="${lx}" cy="${ly}" r="${Math.max(4, stroke * 1.6)}" fill="${chart.series?.[chart.labelSeries ?? 0].color ?? "var(--series-1)"}" stroke="var(--surface)" stroke-width="2"/>`);
+        const ty = above ? Math.max(ly - fs * 0.6, m.t + fs * 0.2) : Math.min(ly + fs * 1.3, m.t + ph - fs * 0.1);
+        parts.push(`<text x="${lx}" y="${ty}" font-size="${fs}" font-weight="bold" fill="var(--ink)" text-anchor="middle"
+          paint-order="stroke" stroke="var(--surface)" stroke-width="3">${escapeHtml(chart.fmt(L.v))}</text>`);
+      }
+
+      parts.push(`<line class="crosshair" x1="0" x2="0" y1="${m.t}" y2="${m.t + ph}" stroke="var(--ink-2)" stroke-width="1" visibility="hidden"/>`);
+      plotEl.innerHTML = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img"
+        aria-label="${escapeHtml(chart.title)}, next ${HOURS} hours">${parts.join("")}</svg>`;
+      plotEl.dataset.left = m.l; plotEl.dataset.slot = slot;
+    }
+
+    // ===== Hover: one crosshair across every chart, one tooltip listing every value =====
+
+    function valueAt(chart, i) {
+      if (chart.type === "bins") {
+        const b = chart.bins.find((b) => i >= b.from && i < b.to);
+        return b ? [{ name: chart.title, text: chart.fmt(b.value) }] : [];
+      }
+      return chart.series.map((s) => ({ name: chart.series.length > 1 ? s.name : chart.title, color: s.color,
+        text: s.values[i] == null ? "–" : chart.fmt(s.values[i]) }));
+    }
+
+    // Attached once; each refresh replaces the panel's contents, so the tooltip is found or re-made.
+    function attachHover(panel) {
+      const getTip = () => panel.querySelector(".tip") ?? panel.appendChild(Object.assign(document.createElement("div"), { className: "tip" }));
+      const hide = () => { getTip().style.display = "none"; panel.querySelectorAll(".crosshair").forEach((c) => c.setAttribute("visibility", "hidden")); };
+      panel.addEventListener("pointerleave", hide);
+      panel.addEventListener("pointermove", (e) => {
+        const plot = panel.querySelector(".plot");
+        if (!state || !plot) return;
+        const tip = getTip();
+        const left = Number(plot.dataset.left), slot = Number(plot.dataset.slot);
+        const px = e.clientX - plot.getBoundingClientRect().left;
+        const i = Math.floor((px - left) / slot);
+        if (!(i >= 0 && i < HOURS)) return hide();
+        panel.querySelectorAll(".crosshair").forEach((c) => {
+          const cx = left + (i + 0.5) * slot;
+          c.setAttribute("x1", cx); c.setAttribute("x2", cx); c.setAttribute("visibility", "visible");
+        });
+        const rows = state.charts.flatMap((c) => valueAt(c, i));
+        tip.innerHTML = `<b>${escapeHtml(timeLabel(state.t0 + i * 3600e3))}</b>` + rows.map((r) =>
+          `<div>${r.color ? `<span class="sw" style="background:${r.color}"></span>` : ""}${escapeHtml(r.name)}: <b style="display:inline">${escapeHtml(r.text)}</b></div>`).join("");
+        tip.style.display = "block";
+        const pr = panel.getBoundingClientRect();
+        let tx = e.clientX - pr.left + 16, ty = e.clientY - pr.top + 16;
+        if (tx + tip.offsetWidth > pr.width) tx = e.clientX - pr.left - tip.offsetWidth - 16;
+        if (ty + tip.offsetHeight > pr.height) ty = pr.height - tip.offsetHeight - 4;
+        tip.style.left = `${tx}px`; tip.style.top = `${ty}px`;
+      });
+    }
+
+    // Accessible table of every hour, for Knack / desktop (hidden on signage).
+    function renderTable(state) {
+      const cols = state.charts.flatMap((c) => (c.type === "bins" ? [c.title] : c.series.map((s) => (c.series.length > 1 ? s.name : c.title))));
+      const rows = Array.from({ length: HOURS }, (_, i) =>
+        `<tr><th>${escapeHtml(timeLabel(state.t0 + i * 3600e3))}</th>${state.charts.flatMap((c) => valueAt(c, i).map((r) => `<td>${escapeHtml(r.text)}</td>`)).join("")}</tr>`);
+      return `<details class="table-view"><summary>Table view</summary><table>
+        <tr><th>Hour</th>${cols.map((c) => `<th>${escapeHtml(c)}</th>`).join("")}</tr>${rows.join("")}</table></details>`;
+    }
+
+    // Headline numbers for the 48 hours.
+    function renderSummary(s) {
+      const [temp, pop, snow, level, wind] = s.charts;
+      const nums = (c, k = 0) => c.series[k].values.filter((v) => v != null);
+      const t = nums(temp), pp = nums(pop), lv = nums(level), g = nums(wind, 1);
+      const totalSnow = snow.bins.reduce((sum, b) => sum + b.value, 0);
+      const stats = [
+        ["High / low", t.length ? `${Math.round(Math.max(...t))}° / ${Math.round(Math.min(...t))}°` : "–"],
+        ["Peak precip chance", pp.length ? `${Math.round(Math.max(...pp))}%` : "–"],
+        ["New snow, 48h", totalSnow < 0.05 ? "0\"" : snow.fmt(totalSnow)],
+        ["Lowest snow level", lv.length ? level.fmt(Math.min(...lv)) : "–"],
+        ["Peak gust", g.length ? wind.fmt(Math.max(...g)) : "–"],
+        ["Pass elevation", `${PASS_FT.toLocaleString()} ft`],
+      ];
+      return `<div class="summary-card">${stats.map(([k, v]) =>
+        `<div class="stat"><div class="k">${k}</div><div class="v">${escapeHtml(v)}</div></div>`).join("")}</div>`;
+    }
+
+    // ===== Page =====
+
+    let state = null;
+    let observer = null;
+
+    function drawAll() {
+      if (!state) return;
+      const plots = [...document.querySelectorAll("#hourly .plot")];
+      // Time labels go on the bottom chart of each column.
+      const lastInColumn = (n) => !plots[n + 1] ||
+        Math.abs(plots[n + 1].getBoundingClientRect().left - plots[n].getBoundingClientRect().left) > 2;
+      plots.forEach((plot, n) => drawChart(plot, state.charts[n], state.t0, lastInColumn(n)));
+    }
+
+    startPage("hourly", (el, grid) => {
+      state = buildCharts(grid);
+      el.innerHTML = renderSummary(state) + state.charts.map((c) => `<div class="chart">
+          <div class="chart-head"><h2>${escapeHtml(c.title)} <span style="font-weight:normal;color:var(--ink-3)">${escapeHtml(c.unit)}</span></h2>
+            ${c.series?.length > 1 ? c.series.map((s) => `<span class="legend-key"><i style="background:${s.color}"></i>${escapeHtml(s.name)}</span>`).join("") : ""}
+          </div>
+          <div class="plot"></div>
+        </div>`).join("") + renderTable(state);
+      if (!el.dataset.hover) { attachHover(el); el.dataset.hover = "1"; }
+
+      // Charts are drawn at their box's pixel size, so redraw whenever a box changes
+      // (screen fitting, window resizes).
+      observer?.disconnect();
+      observer = new ResizeObserver(drawAll);
+      el.querySelectorAll(".plot").forEach((p) => observer.observe(p));
+      drawAll();
+
+      return "";
+    }, (grid) => grid?.properties?.updateTime, () => fetchJson(NWS_GRID));
+  </script>
+</body>
+</html>
