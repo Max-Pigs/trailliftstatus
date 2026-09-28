@@ -62,6 +62,14 @@ const escapeHtml = (s) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]
   );
 
+// Plain text from an HTML fragment, without running or rendering any of it.
+function htmlToText(html) {
+  const doc = new DOMParser().parseFromString(String(html ?? ""), "text/html");
+  doc.querySelectorAll("br").forEach((br) => br.replaceWith("\n"));
+  doc.querySelectorAll("p, li, div").forEach((el) => el.append("\n\n"));
+  return (doc.body.textContent ?? "").replace(/\n{3,}/g, "\n\n").trim();
+}
+
 // "On Hold" -> "on-hold"; matches the status classes in common.css.
 // Anything we don't have a color for is grey rather than a blank white tile.
 const KNOWN_STATUSES = ["open", "closed", "on-hold", "delayed", "scheduled"];

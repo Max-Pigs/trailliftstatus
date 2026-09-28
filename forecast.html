@@ -3,78 +3,105 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Snoqualmie Pass Forecast</title>
+  <title>NWS Forecast · Snoqualmie Pass</title>
   <link rel="stylesheet" href="common.css">
   <script src="common.js"></script>
+  <script src="nws.js"></script>
   <style>
-    #forecast { --cols: 4; --cols-portrait: 2; --embed-min-col: 200px; }
+    /* Alerts and the snow strip hug their content; the 6 periods share the rest. */
+    #forecast { --cols: 3; --cols-portrait: 2; --embed-min-col: 240px; grid-template-rows: auto; }
+    #forecast.with-alerts { grid-template-rows: auto auto; }
+    html.embed #forecast { grid-template-rows: none; }
 
-    .card {
+    .alerts, .snow-strip { grid-column: 1 / -1; }
+
+    .alerts { display: grid; gap: 0.4rem; }
+    .alert { padding: 0.5em 0.8em; border-radius: 0.5rem; border-left: 0.4em solid; font-size: 0.9rem; }
+    .alert .event { font-size: 1.15em; font-weight: bold; }
+    .alert .when { font-size: 0.8em; opacity: 0.85; }
+    .alert.severe   { background: #f8d7da; color: #721c24; border-color: #c62828; }
+    .alert.moderate { background: #fff3cd; color: #6b4e00; border-color: #f9a825; }
+    .alert.minor    { background: #e2e3e5; color: #333;    border-color: #6c757d; }
+
+    .snow-strip {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 0.3rem 1.5rem;
+      padding: 0.4em 0.8em;
+      border-radius: 0.5rem;
+      background: #f1f8fe;
+      font-size: 0.9rem;
+    }
+    .snow-strip b { font-size: 1.3em; }
+    .snow-strip .sub { font-size: 0.85em; color: #555; }
+
+    .period {
       display: flex;
       flex-direction: column;
-      gap: 0.25em;
+      gap: 0.3em;
       min-width: 0;
       padding: 0.6em 0.8em;
       border-radius: 0.5rem;
       background: #e3f2fd;
-      font-size: 1rem;
+      font-size: 0.9rem;
     }
-    .card h3 { margin: 0; font-size: 1.1em; }
-    .card p { margin: 0; }
-    .card .big { font-size: 2em; font-weight: bold; line-height: 1.1; }
-    .card .sub { font-size: 0.8em; color: #444; }
-
-    .period { flex-direction: row; align-items: center; gap: 0.6em; }
-    .period img { width: 3.2em; height: 3.2em; border-radius: 0.4rem; flex: none; }
-    .period .text { display: flex; flex-direction: column; gap: 0.2em; min-width: 0; }
     .period.night { background: #e8eaf6; }
-
-    .snow { background: #f1f8fe; }
-    .snow .row { display: flex; justify-content: space-between; gap: 0.5em; }
-    .snow .row b { font-size: 1.3em; }
-
-    /* North American avalanche danger scale colors. */
-    .avy { color: #fff; background: #888; }
-    .avy .sub { color: inherit; opacity: 0.9; }
-    .avy a { color: inherit; }
-    .danger-1 { background: #50b848; }
-    .danger-2 { background: #fff200; color: #222; }
-    .danger-3 { background: #f7941e; color: #222; }
-    .danger-4 { background: #ed1c24; }
-    .danger-5 { background: #231f20; }
+    .period .top { display: flex; align-items: center; gap: 0.6em; }
+    .period img { width: 3em; height: 3em; border-radius: 0.4rem; flex: none; }
+    .period h3 { margin: 0; font-size: 1.1em; }
+    .period .temp { margin-left: auto; font-size: 1.9em; font-weight: bold; line-height: 1; }
+    .period .detail { margin: 0; line-height: 1.3; }
   </style>
 </head>
 <body>
   <header class="page-head">
-    <h1>Snoqualmie Pass Forecast</h1>
+    <h1>NWS Forecast · Snoqualmie Pass</h1>
     <div class="page-status"></div>
   </header>
 
   <div id="forecast" class="panel">Loading forecast...</div>
 
   <footer class="page-foot">
-    <span>Forecast: National Weather Service · Avalanche: NWAC</span>
+    <span>National Weather Service, Seattle</span>
     <span class="updated"></span>
   </footer>
 
   <script>
-    // NWS grid point for Snoqualmie Pass (from api.weather.gov/points/47.4264,-121.4173).
-    const NWS_GRID = "https://api.weather.gov/gridpoints/SEW/152,54";
-    const AVY_URL = "https://api.avalanche.org/v2/public/products/map-layer/NWAC";
-    const AVY_ZONE = "Snoqualmie Pass";
-    const PERIODS = 6; // forecast periods shown (day / night halves)
+    const PERIODS = 6; // day / night halves shown
 
     async function fetchForecast() {
-      const [forecast, grid, avy] = await Promise.all([
+      const [forecast, grid, alerts] = await Promise.all([
         fetchJson(`${NWS_GRID}/forecast`),
         fetchJson(NWS_GRID),
-        // The avalanche card is optional: the forecast still shows if NWAC is down.
-        fetchJson(AVY_URL).catch((err) => { console.error("Avalanche data:", err); return null; }),
+        // Alerts are optional: the forecast still shows if that call fails.
+        fetchJson(`https://api.weather.gov/alerts/active?point=${NWS_POINT.lat},${NWS_POINT.lon}`)
+          .catch((err) => { console.error("NWS alerts:", err); return null; }),
       ]);
-      return { forecast, grid, avy };
+      return { forecast, grid, alerts };
     }
 
-    // NWS grid values are [{ validTime: "2026-09-28T00:00:00+00:00/PT6H", value }].
+    // ===== Alerts (watches, warnings, advisories) =====
+
+    const severityClass = (s) =>
+      /extreme|severe/i.test(s) ? "severe" : /moderate/i.test(s) ? "moderate" : "minor";
+
+    function renderAlerts(alerts) {
+      const list = toArray(alerts?.features).map((f) => f.properties);
+      if (!list.length) return "";
+      return `<div class="alerts">${list.map((a) => {
+        const until = formatTime(a.ends ?? a.expires);
+        return `<div class="alert ${severityClass(a.severity)}">
+          <div class="event">${escapeHtml(a.event)}</div>
+          <div>${escapeHtml(a.headline ?? "")}</div>
+          ${until ? `<div class="when">Until ${escapeHtml(until)}</div>` : ""}
+        </div>`;
+      }).join("")}</div>`;
+    }
+
+    // ===== New snow and snow level, from the NWS grid forecast =====
+
+    // Grid values are [{ validTime: "2026-09-28T00:00:00+00:00/PT6H", value }].
     function valuesWithin(series, hours) {
       const now = Date.now(), until = now + hours * 3600e3;
       return toArray(series?.values).filter((v) => {
@@ -83,72 +110,51 @@
       });
     }
 
-    const mmToIn = (mm) => mm / 25.4;
-    const mToFt = (m) => m * 3.28084;
-    const round100 = (ft) => Math.round(ft / 100) * 100;
-
     function snowTotal(grid, hours) {
-      const inches = mmToIn(valuesWithin(grid?.properties?.snowfallAmount, hours)
-        .reduce((sum, v) => sum + v.value, 0));
+      const inches = valuesWithin(grid?.properties?.snowfallAmount, hours)
+        .reduce((sum, v) => sum + v.value, 0) / 25.4;
       return inches < 0.5 ? (inches > 0 ? "Trace" : "0\"") : `${Math.round(inches)}"`;
     }
 
     function snowLevelRange(grid, hours) {
-      const ft = valuesWithin(grid?.properties?.snowLevel, hours).map((v) => round100(mToFt(v.value)));
+      const ft = valuesWithin(grid?.properties?.snowLevel, hours)
+        .map((v) => Math.round((v.value * 3.28084) / 100) * 100);
       if (!ft.length) return "";
       const lo = Math.min(...ft), hi = Math.max(...ft);
       return lo === hi ? `${lo.toLocaleString()} ft` : `${lo.toLocaleString()}–${hi.toLocaleString()} ft`;
     }
 
-    function renderPeriod(p) {
-      const pop = p.probabilityOfPrecipitation?.value;
-      const wind = /^0 mph$/.test(p.windSpeed ?? "") ? "Calm"
-        : p.windSpeed ? `Wind ${p.windDirection ?? ""} ${p.windSpeed}`.replace(/\s+/g, " ") : "";
-      const details = [wind,
-                       pop ? `${pop}% precip` : ""].filter(Boolean).join(" · ");
-      const icon = p.icon ? `<img src="${escapeHtml(p.icon.replace(/size=\w+/, "size=large"))}" alt="">` : "";
-      return `<div class="card period${p.isDaytime ? "" : " night"}">
-        ${icon}
-        <div class="text">
-          <h3>${escapeHtml(p.name)}</h3>
-          <p class="big">${escapeHtml(p.temperature)}°${escapeHtml(p.temperatureUnit)}</p>
-          <p>${escapeHtml(p.shortForecast)}</p>
-          ${details ? `<p class="sub">${escapeHtml(details)}</p>` : ""}
-        </div>
-      </div>`;
-    }
-
-    function renderSnow(grid) {
+    function renderSnowStrip(grid) {
       const level = snowLevelRange(grid, 24);
-      return `<div class="card snow">
-        <h3>New snow</h3>
-        <p class="row"><span>Next 24 hours</span><b>${snowTotal(grid, 24)}</b></p>
-        <p class="row"><span>Next 48 hours</span><b>${snowTotal(grid, 48)}</b></p>
-        ${level ? `<p class="sub">Snow level next 24h: ${escapeHtml(level)} (pass is 3,022 ft)</p>` : ""}
+      return `<div class="snow-strip">
+        <span>New snow next 24h <b>${snowTotal(grid, 24)}</b></span>
+        <span>Next 48h <b>${snowTotal(grid, 48)}</b></span>
+        ${level ? `<span>Snow level next 24h <b>${escapeHtml(level)}</b> <span class="sub">(pass 3,022 ft)</span></span>` : ""}
       </div>`;
     }
 
-    function renderAvalanche(avy) {
-      const zone = toArray(avy?.features).map((f) => f.properties).find((p) => p?.name === AVY_ZONE);
-      if (!zone) return `<div class="card avy"><h3>Avalanche danger</h3><p>Unavailable right now.</p></div>`;
+    // ===== Periods, with NWS's full detailed description =====
 
-      const level = Number(zone.danger_level);
-      const rating = level > 0
-        ? `${level} – ${zone.danger.replace(/^\w/, (c) => c.toUpperCase())}`
-        : "No rating";
-      const note = zone.off_season ? "NWAC is between seasons; forecasts resume when it snows." : zone.travel_advice;
-      return `<div class="card avy${level > 0 ? ` danger-${level}` : ""}">
-        <h3>Avalanche danger · ${escapeHtml(AVY_ZONE)}</h3>
-        <p class="big">${escapeHtml(rating)}</p>
-        ${note ? `<p class="sub">${escapeHtml(note)}</p>` : ""}
+    function renderPeriod(p) {
+      const icon = p.icon ? `<img src="${escapeHtml(p.icon.replace(/size=\w+/, "size=large"))}" alt="">` : "";
+      return `<div class="period${p.isDaytime ? "" : " night"}">
+        <div class="top">
+          ${icon}
+          <h3>${escapeHtml(p.name)}</h3>
+          <span class="temp">${escapeHtml(p.temperature)}°</span>
+        </div>
+        <p class="detail">${escapeHtml(p.detailedForecast || p.shortForecast)}</p>
       </div>`;
     }
 
-    startPage("forecast", (el, { forecast, grid, avy }) => {
+    startPage("forecast", (el, { forecast, grid, alerts }) => {
       const periods = toArray(forecast?.properties?.periods).slice(0, PERIODS);
       if (!periods.length) return showMessage(el, "Forecast unavailable.");
 
-      el.innerHTML = renderAvalanche(avy) + renderSnow(grid) + periods.map(renderPeriod).join("");
+      const alertsHtml = renderAlerts(alerts);
+      el.classList.toggle("with-alerts", Boolean(alertsHtml));
+      el.innerHTML = alertsHtml + renderSnowStrip(grid) + periods.map(renderPeriod).join("");
+      return "";
     }, ({ forecast }) => forecast?.properties?.updateTime ?? forecast?.properties?.generatedAt, fetchForecast);
   </script>
 </body>
