@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>I-90 Snoqualmie Pass</title>
+  <link rel="stylesheet" href="common.css">
+  <script src="common.js"></script>
+  <script src="cameras.js"></script>
+  <style>
+    /* Strip (and road note, when there is one) hug their content; cam rows share the rest. */
+    #pass { --cols: 5; --cols-portrait: 3; --embed-min-col: 220px; grid-template-rows: auto; }
+    #pass.with-note { grid-template-rows: auto auto; }
+    html.embed #pass { grid-template-rows: none; }
+
+    /* Restrictions are longer than the resort banner; keep them compact. */
+    .page-status .banner { font-size: 0.75rem; }
+
+    .strip, .road-note { grid-column: 1 / -1; }
+    .strip svg { display: block; width: 100%; height: auto; }
+    .strip text { font-family: Arial, sans-serif; }
+
+    .road-note {
+      margin: 0;
+      font-size: 0.75rem;
+      color: #444;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .cam {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3em;
+      min-width: 0;
+      min-height: 0;
+      padding: 0.4em;
+      border-radius: 0.5rem;
+      background: #1f2933;
+      color: #fff;
+      font-size: 0.85rem;
+    }
+    .cam .label { display: flex; align-items: center; gap: 0.4em; font-size: 0.8rem; font-weight: bold; }
+    .cam .label .mp { margin-left: auto; font-weight: normal; opacity: 0.75; white-space: nowrap; }
+    .cam img {
+      flex: 1;
+      width: 100%;
+      min-height: 0;
+      object-fit: contain;
+      background: #000;
+      border-radius: 0.3rem;
+    }
+    html.embed .cam img { flex: none; aspect-ratio: 320 / 201; }
+    .cam.stale img { opacity: 0.5; }
+
+    .num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.5em;
+      height: 1.5em;
+      flex: none;
+      border-radius: 50%;
+      background: #1565c0;
+      color: #fff;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+  <header class="page-head">
+    <h1>I-90 Snoqualmie Pass</h1>
+    <div class="page-status"></div>
+  </header>
+
+  <div id="pass" class="panel">Loading pass cameras...</div>
+
+  <footer class="page-foot">
+    <span>Cameras and road report: WSDOT</span>
+    <span class="updated"></span>
+  </footer>
+
+  <script>
+    // The wsdot worker (worker/wsdot.js). Leave empty until it's deployed; the
+    // page then shows cameras only.
+    const WSDOT_WORKER_URL = "";
+
+    const SUMMIT_MP = 52;
+    const SUMMIT_FT = 3022;
+
+    let catalog = null;
+    async function fetchPass() {
+      catalog ??= await fetchJson(CAMERA_CATALOG_URL);
+      const pass = WSDOT_WORKER_URL
+        ? await fetchJson(WSDOT_WORKER_URL).catch((err) => { console.error("WSDOT worker:", err); return null; })
+        : null;
+      const cams = catalog.filter((c) => SHOWN_CAMERAS.includes(c.id)).sort((a, b) => a.milepost - b.milepost);
+      return { cams, pass };
+    }
+
+    // "No restrictions" -> green, anything mentioning closed/chains -> red, else yellow.
+    function restrictionClass(text) {
+      const t = String(text ?? "").toLowerCase();
+      if (!t) return "unknown";
+      if (t.includes("no restriction")) return "open";
+      if (/\bclosed\b|chains?\b.*\brequired/.test(t)) return "closed";
+      return "on-hold";
+    }
+
+    // Highway strip: I-90 west to east, segment bands, numbered cams, summit marker.
+    function renderStrip(cams) {
+      const W = 1000, H = 92, LINE_Y = 58, PAD = 40;
+      const lo = Math.min(SUMMIT_MP, ...cams.map((c) => c.milepost)) - 1;
+      const hi = Math.max(SUMMIT_MP, ...cams.map((c) => c.milepost)) + 1;
+      const x = (mp) => PAD + ((mp - lo) / (hi - lo)) * (W - 2 * PAD);
+
+      // Segment bands span the catalog cams of that segment within the strip's range.
+      const inRange = catalog.filter((c) => c.milepost >= lo && c.milepost <= hi);
+      const segments = [...new Set(inRange.map((c) => c.segment))].map((name) => {
+        const mps = inRange.filter((c) => c.segment === name).map((c) => c.milepost);
+        return { name, from: Math.min(...mps), to: Math.max(...mps) };
+      });
+      const bands = segments.map((s, i) => {
+        const x1 = x(s.from) - 6, x2 = x(s.to) + 6;
+        return `<rect x="${x1}" y="${LINE_Y - 22}" width="${Math.max(x2 - x1, 12)}" height="44" rx="6"
+                  fill="${i % 2 ? "#eef2f6" : "#e3eaf2"}"/>
+                <text x="${(x1 + x2) / 2}" y="${LINE_Y - 28}" font-size="12" fill="#555" text-anchor="middle">${escapeHtml(s.name)}</text>`;
+      }).join("");
+
+      const summit = `
+        <path d="M${x(SUMMIT_MP) - 9},${LINE_Y + 20} L${x(SUMMIT_MP)},${LINE_Y + 6} L${x(SUMMIT_MP) + 9},${LINE_Y + 20} Z" fill="#555"/>
+        <text x="${x(SUMMIT_MP)}" y="${LINE_Y + 33}" font-size="11" fill="#333" text-anchor="middle">Summit ${SUMMIT_FT.toLocaleString()} ft</text>`;
+
+      const pins = cams.map((c, i) => `
+        <circle cx="${x(c.milepost)}" cy="${LINE_Y}" r="9" fill="#1565c0" stroke="#fff" stroke-width="2"/>
+        <text x="${x(c.milepost)}" y="${LINE_Y + 4}" font-size="11" font-weight="bold" fill="#fff" text-anchor="middle">${i + 1}</text>`).join("");
+
+      return `<div class="strip">
+        <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="I-90 from milepost ${Math.round(lo)} to ${Math.round(hi)} with camera locations">
+          <text x="4" y="${LINE_Y + 4}" font-size="12" fill="#555">W</text>
+          <text x="${W - 4}" y="${LINE_Y + 4}" font-size="12" fill="#555" text-anchor="end">E</text>
+          ${bands}
+          <line x1="${PAD - 10}" y1="${LINE_Y}" x2="${W - PAD + 10}" y2="${LINE_Y}" stroke="#c62828" stroke-width="5" stroke-linecap="round"/>
+          ${summit}
+          ${pins}
+        </svg>
+      </div>`;
+    }
+
+    function renderCam(c, i) {
+      return `<div class="cam" data-id="${c.id}">
+        <div class="label"><span class="num">${i + 1}</span>${escapeHtml(c.name)}<span class="mp">MP ${c.milepost}</span></div>
+        <img src="${escapeHtml(c.image)}?t=${Date.now()}" alt="${escapeHtml(c.name)} camera">
+      </div>`;
+    }
+
+    function renderRoadNote(pass) {
+      if (!WSDOT_WORKER_URL) return "";
+      if (!pass) return `<p class="road-note">Road report unavailable right now.</p>`;
+      const temp = pass.temperatureF != null ? `${pass.temperatureF}°F. ` : "";
+      const text = [pass.roadCondition, pass.weatherCondition].filter(Boolean).join(" ");
+      return text || temp ? `<p class="road-note">${escapeHtml(temp + text)}</p>` : "";
+    }
+
+    function renderRestrictions(pass) {
+      if (!pass) return "";
+      return [["Eastbound", pass.eastbound], ["Westbound", pass.westbound]]
+        .filter(([, text]) => text)
+        .map(([dir, text]) => `<span class="banner ${restrictionClass(text)}">${dir}: ${escapeHtml(text)}</span>`)
+        .join("");
+    }
+
+    // Signage: pick the column count that makes the camera images largest for this
+    // screen and number of cams (WSDOT images are about 320x201).
+    const CAM_ASPECT = 320 / 201;
+    function layoutCams() {
+      const panel = document.getElementById("pass");
+      const tiles = panel.querySelectorAll(".cam");
+      if (EMBED || !tiles.length) return;
+      const gap = parseFloat(getComputedStyle(panel).rowGap) || 0;
+      const fixed = [...panel.children].filter((c) => !c.classList.contains("cam"))
+        .reduce((h, c) => h + c.offsetHeight + gap, 0);
+      const labelH = tiles[0].querySelector(".label").offsetHeight + 12;
+      const W = panel.clientWidth - 20, H = panel.clientHeight - fixed - 20;
+
+      let best = 1, bestWidth = 0;
+      for (let cols = 1; cols <= tiles.length; cols++) {
+        const rows = Math.ceil(tiles.length / cols);
+        const cellW = (W - gap * (cols - 1)) / cols;
+        const cellH = (H - gap * (rows - 1)) / rows - labelH;
+        const imgW = Math.min(cellW, cellH * CAM_ASPECT);
+        if (imgW > bestWidth) { best = cols; bestWidth = imgW; }
+      }
+      panel.style.setProperty("--cols", best);
+      panel.style.setProperty("--cols-portrait", best);
+    }
+    window.addEventListener("resize", () => { layoutCams(); fitToScreen(); });
+
+    // Swap each image for a fresh one once it has loaded, so screens never flash blank.
+    // A cam that fails to refresh keeps its last image, dimmed.
+    function refreshImages() {
+      document.querySelectorAll(".cam").forEach((tile) => {
+        const img = tile.querySelector("img");
+        const next = new Image();
+        next.onload = () => { img.src = next.src; tile.classList.remove("stale"); };
+        next.onerror = () => tile.classList.add("stale");
+        next.src = img.src.replace(/\?t=\d+/, "") + `?t=${Date.now()}`;
+      });
+    }
+    setInterval(refreshImages, CAMERA_REFRESH_MS);
+
+    startPage("pass", (el, { cams, pass }) => {
+      if (!cams.length) return showMessage(el, "No cameras selected. See cameras.js.");
+      const note = renderRoadNote(pass);
+      el.classList.toggle("with-note", Boolean(note));
+      el.innerHTML = renderStrip(cams) + note + cams.map(renderCam).join("");
+      layoutCams();
+      el.querySelectorAll(".cam img").forEach((img) => {
+        img.addEventListener("load", afterRender, { once: true });
+        img.addEventListener("error", () => img.closest(".cam").classList.add("stale"), { once: true });
+      });
+      return { statusHtml: renderRestrictions(pass) };
+    }, ({ pass }) => pass?.updated, fetchPass);
+  </script>
+</body>
+</html>

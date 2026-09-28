@@ -1,0 +1,317 @@
+[
+ {
+  "id": 9425,
+  "name": "North Bend",
+  "milepost": 33.2,
+  "segment": "West approach",
+  "lat": 47.473056,
+  "lon": -121.746667,
+  "image": "https://images.wsdot.wa.gov/sc/090VC03326.jpg"
+ },
+ {
+  "id": 10222,
+  "name": "Homestead Valley Rd",
+  "milepost": 37.75,
+  "segment": "West approach",
+  "lat": 47.443355,
+  "lon": -121.670671,
+  "image": "https://images.wsdot.wa.gov/SC/090vc03775.jpg"
+ },
+ {
+  "id": 9433,
+  "name": "Tinkham Road",
+  "milepost": 45.2,
+  "segment": "West approach",
+  "lat": 47.395833,
+  "lon": -121.532778,
+  "image": "https://images.wsdot.wa.gov/sc/090VC04526.jpg"
+ },
+ {
+  "id": 9029,
+  "name": "Denny Creek",
+  "milepost": 46.8,
+  "segment": "West approach",
+  "lat": 47.396441,
+  "lon": -121.49935,
+  "image": "https://images.wsdot.wa.gov/sc/090VC04680.jpg"
+ },
+ {
+  "id": 9426,
+  "name": "Asahel Curtis",
+  "milepost": 48.1,
+  "segment": "West approach",
+  "lat": 47.393333,
+  "lon": -121.473333,
+  "image": "https://images.wsdot.wa.gov/sc/090VC04810.jpg"
+ },
+ {
+  "id": 9427,
+  "name": "Rockdale",
+  "milepost": 49.3,
+  "segment": "West approach",
+  "lat": 47.398068,
+  "lon": -121.447255,
+  "image": "https://images.wsdot.wa.gov/sc/090VC04938.jpg"
+ },
+ {
+  "id": 1099,
+  "name": "Franklin Falls",
+  "milepost": 51.3,
+  "segment": "West approach",
+  "lat": 47.425689,
+  "lon": -121.43314,
+  "image": "https://images.wsdot.wa.gov/sc/090VC05130.jpg"
+ },
+ {
+  "id": 1100,
+  "name": "Snoqualmie Summit",
+  "milepost": 52.0,
+  "segment": "Summit",
+  "lat": 47.428397,
+  "lon": -121.419659,
+  "image": "https://images.wsdot.wa.gov/sc/090VC05200.jpg"
+ },
+ {
+  "id": 9428,
+  "name": "East Snoqualmie Summit",
+  "milepost": 53.4,
+  "segment": "Summit",
+  "lat": 47.411218,
+  "lon": -121.410134,
+  "image": "https://images.wsdot.wa.gov/sc/090VC05347.jpg"
+ },
+ {
+  "id": 10296,
+  "name": "Hyak Hill",
+  "milepost": 54.5,
+  "segment": "Summit",
+  "lat": 47.398999,
+  "lon": -121.399132,
+  "image": "https://images.wsdot.wa.gov/sc/090vc05450.jpg"
+ },
+ {
+  "id": 1102,
+  "name": "Hyak",
+  "milepost": 55.1,
+  "segment": "Summit",
+  "lat": 47.392815,
+  "lon": -121.388906,
+  "image": "https://images.wsdot.wa.gov/sc/090VC05517.jpg"
+ },
+ {
+  "id": 10070,
+  "name": "MP 55.2",
+  "milepost": 55.2,
+  "segment": "Summit",
+  "lat": 47.392527,
+  "lon": -121.387926,
+  "image": "https://images.wsdot.wa.gov/sc/090vc05520.jpg"
+ },
+ {
+  "id": 10242,
+  "name": "Rocky Run Creek",
+  "milepost": 56.88,
+  "segment": "Keechelus",
+  "lat": 47.372032,
+  "lon": -121.376427,
+  "image": "https://images.wsdot.wa.gov/sc/090vc05688.jpg"
+ },
+ {
+  "id": 9434,
+  "name": "Old Keechelus Snow Shed",
+  "milepost": 57.7,
+  "segment": "Keechelus",
+  "lat": 47.36012,
+  "lon": -121.371722,
+  "image": "https://images.wsdot.wa.gov/sc/090VC05771.jpg"
+ },
+ {
+  "id": 9914,
+  "name": "Avalanche Bridge",
+  "milepost": 58.2,
+  "segment": "Keechelus",
+  "lat": 47.356995,
+  "lon": -121.367297,
+  "image": "https://images.wsdot.wa.gov/sc/090vc05820.jpg"
+ },
+ {
+  "id": 9915,
+  "name": "Slide Curve",
+  "milepost": 59.3,
+  "segment": "Keechelus",
+  "lat": 47.340517,
+  "lon": -121.359859,
+  "image": "https://images.wsdot.wa.gov/sc/090vc05930.jpg"
+ },
+ {
+  "id": 9916,
+  "name": "Resort Creek",
+  "milepost": 59.9,
+  "segment": "Keechelus",
+  "lat": 47.337163,
+  "lon": -121.349065,
+  "image": "https://images.wsdot.wa.gov/sc/090VC05990.jpg"
+ },
+ {
+  "id": 9917,
+  "name": "Lake Keechelus Dam",
+  "milepost": 60.5,
+  "segment": "Keechelus",
+  "lat": 47.329894,
+  "lon": -121.342226,
+  "image": "https://images.wsdot.wa.gov/sc/090VC06050.jpg"
+ },
+ {
+  "id": 9918,
+  "name": "Price Creek",
+  "milepost": 61.1,
+  "segment": "Keechelus",
+  "lat": 47.326099,
+  "lon": -121.330308,
+  "image": "https://images.wsdot.wa.gov/sc/090vc06112.jpg"
+ },
+ {
+  "id": 9919,
+  "name": "Animal Overcrossing",
+  "milepost": 61.3,
+  "segment": "Keechelus",
+  "lat": 47.324144,
+  "lon": -121.32725,
+  "image": "https://images.wsdot.wa.gov/sc/090VC06132.jpg"
+ },
+ {
+  "id": 9920,
+  "name": "Stampede Pass",
+  "milepost": 61.7,
+  "segment": "Keechelus",
+  "lat": 47.319465,
+  "lon": -121.32177,
+  "image": "https://images.wsdot.wa.gov/sc/090VC06173.jpg"
+ },
+ {
+  "id": 10289,
+  "name": "Stampede Pass Exit 62",
+  "milepost": 62.97,
+  "segment": "Keechelus",
+  "lat": 47.305868,
+  "lon": -121.30588,
+  "image": "https://images.wsdot.wa.gov/SC/090vc06297.jpg"
+ },
+ {
+  "id": 10129,
+  "name": "Lake Easton",
+  "milepost": 69.78,
+  "segment": "Easton to Cle Elum",
+  "lat": 47.255851,
+  "lon": -121.196348,
+  "image": "https://images.wsdot.wa.gov/SC/090vc06978.jpg"
+ },
+ {
+  "id": 1103,
+  "name": "Easton",
+  "milepost": 70.6,
+  "segment": "Easton to Cle Elum",
+  "lat": 47.246581,
+  "lon": -121.185882,
+  "image": "https://images.wsdot.wa.gov/sc/090VC07060.jpg"
+ },
+ {
+  "id": 9429,
+  "name": "East Easton",
+  "milepost": 72.6,
+  "segment": "Easton to Cle Elum",
+  "lat": 47.225278,
+  "lon": -121.156944,
+  "image": "https://images.wsdot.wa.gov/sc/090VC07266.jpg"
+ },
+ {
+  "id": 8205,
+  "name": "West Nelson",
+  "milepost": 73.1,
+  "segment": "Easton to Cle Elum",
+  "lat": 47.219807,
+  "lon": -121.149157,
+  "image": "https://images.wsdot.wa.gov/sc/090VC07319.jpg"
+ },
+ {
+  "id": 10130,
+  "name": "Big Creek",
+  "milepost": 75.05,
+  "segment": "Easton to Cle Elum",
+  "lat": 47.213573,
+  "lon": -121.109771,
+  "image": "https://images.wsdot.wa.gov/SC/090vc07505.jpg"
+ },
+ {
+  "id": 10223,
+  "name": "Ensign Ranch",
+  "milepost": 76.48,
+  "segment": "Easton to Cle Elum",
+  "lat": 47.205285,
+  "lon": -121.08293,
+  "image": "https://images.wsdot.wa.gov/SC/090vc07648.jpg"
+ },
+ {
+  "id": 8094,
+  "name": "Bullfrog RWIS",
+  "milepost": 79.5,
+  "segment": "Easton to Cle Elum",
+  "lat": 47.182134,
+  "lon": -121.031082,
+  "image": "https://images.wsdot.wa.gov/rweather/Medium_bullfrog.jpg"
+ },
+ {
+  "id": 10243,
+  "name": "West Cle Elum Interchange",
+  "milepost": 82.75,
+  "segment": "Easton to Cle Elum",
+  "lat": 47.193308,
+  "lon": -120.966495,
+  "image": "https://images.wsdot.wa.gov/sc/090vc08275.jpg"
+ },
+ {
+  "id": 9028,
+  "name": "Cle Elum",
+  "milepost": 84.6,
+  "segment": "Easton to Cle Elum",
+  "lat": 47.18935,
+  "lon": -120.928219,
+  "image": "https://images.wsdot.wa.gov/sc/090VC08460.jpg"
+ },
+ {
+  "id": 10290,
+  "name": "Cle Elum",
+  "milepost": 86.71,
+  "segment": "Easton to Cle Elum",
+  "lat": 47.173674,
+  "lon": -120.889115,
+  "image": "https://images.wsdot.wa.gov/SC/090vc08671.jpg"
+ },
+ {
+  "id": 9430,
+  "name": "Indian John Hill",
+  "milepost": 89.4,
+  "segment": "Easton to Cle Elum",
+  "lat": 47.162222,
+  "lon": -120.848889,
+  "image": "https://images.wsdot.wa.gov/sc/090VC08940.jpg"
+ },
+ {
+  "id": 1104,
+  "name": "Elk Heights",
+  "milepost": 92.1,
+  "segment": "Easton to Cle Elum",
+  "lat": 47.132458,
+  "lon": -120.809648,
+  "image": "https://images.wsdot.wa.gov/sc/090VC09212.jpg"
+ },
+ {
+  "id": 8201,
+  "name": "Elk Heights",
+  "milepost": 93.6,
+  "segment": "Easton to Cle Elum",
+  "lat": 47.115056,
+  "lon": -120.789734,
+  "image": "https://images.wsdot.wa.gov/sc/090VC09360.jpg"
+ }
+]

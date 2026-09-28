@@ -105,9 +105,12 @@ function formatTime(iso) {
 }
 
 // Fills the header's .page-status (resort banner + summary) and the footer's .updated.
+// `summary` is a string, or { statusHtml } for a page that builds its own header status.
 function renderPageFrame(data, summary, updatedAt) {
   const statusEl = document.querySelector(".page-status");
-  if (statusEl) {
+  if (statusEl && summary?.statusHtml != null) {
+    statusEl.innerHTML = summary.statusHtml;
+  } else if (statusEl) {
     const status = resortStatus(data);
     const banner = status && !resortIsOpen(data)
       ? `<span class="banner ${statusClass(status)}">Resort ${escapeHtml(status.toLowerCase())}</span>`
@@ -120,7 +123,8 @@ function renderPageFrame(data, summary, updatedAt) {
 }
 
 // Loads now, then every REFRESH_INTERVAL_MS.
-// `load(el, data)` renders the panel and may return a summary line ("3 of 8 lifts open").
+// `load(el, data)` renders the panel and may return a summary line ("3 of 8 lifts open"),
+// or { statusHtml } to replace the header status entirely.
 // `updatedAt(data)` picks the feed timestamp shown in the footer.
 // `fetchData()` loads the page's data; defaults to the resort feed.
 // A failed refresh keeps the last good render on screen instead of blanking it.
