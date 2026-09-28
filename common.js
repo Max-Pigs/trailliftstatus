@@ -72,13 +72,15 @@ function statusMark(status) {
 
 const isOpen = (item) => statusClass(item?.status) === "open";
 
-async function fetchResort() {
-  const res = await fetch(API_URL, { cache: "no-store" });
-  if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
+async function fetchJson(url) {
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP error ${res.status} from ${new URL(url).host}`);
   const data = await res.json();
   if (data?.error) throw new Error(`API error: ${data.error}`);
   return data;
 }
+
+const fetchResort = () => fetchJson(API_URL);
 
 function findArea(data, name) {
   return toArray(data?.facilities?.areas?.area).find((a) => a?.name === name);
@@ -120,14 +122,15 @@ function renderPageFrame(data, summary, updatedAt) {
 // Loads now, then every REFRESH_INTERVAL_MS.
 // `load(el, data)` renders the panel and may return a summary line ("3 of 8 lifts open").
 // `updatedAt(data)` picks the feed timestamp shown in the footer.
+// `fetchData()` loads the page's data; defaults to the resort feed.
 // A failed refresh keeps the last good render on screen instead of blanking it.
-function startPage(elementId, load, updatedAt = (data) => data?.updated) {
+function startPage(elementId, load, updatedAt = (data) => data?.updated, fetchData = fetchResort) {
   const el = document.getElementById(elementId);
   let hasRendered = false;
 
   async function refresh() {
     try {
-      const data = await fetchResort();
+      const data = await fetchData();
       const summary = load(el, data);
       renderPageFrame(data, summary, updatedAt(data));
       hasRendered = true;
