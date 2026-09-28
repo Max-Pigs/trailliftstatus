@@ -7,6 +7,7 @@ Live status boards for Summit at Snoqualmie, served by GitHub Pages from `main`:
 | --- | --- | --- |
 | `index.html` | `/trailliftstatus/` | Summit Central trails, Beginner → Expert then A–Z: open / closed / on hold, groomed |
 | `lifts.html` | `/trailliftstatus/lifts.html` | Summit Central lifts and their status |
+| `forecast.html` | `/trailliftstatus/forecast.html` | Snoqualmie Pass forecast (NWS): next 6 periods, new snow 24h/48h, snow level, plus NWAC avalanche danger |
 | `weather.html` | `/trailliftstatus/weather.html` | Snow Conditions: base depth, 24h snow and surface for each base area |
 
 The same pages run on the digital signage screens (Yodeck, portrait or landscape)
