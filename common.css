@@ -10,6 +10,10 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
+/* Light-only design: keeps pages readable when opened in a dark-mode browser (and makes
+   browsers paint an embed white rather than inheriting a dark host's canvas). */
+:root { color-scheme: light; }
+
 html { font-size: 3.4vmin; }          /* signage starting size; fitToScreen shrinks it */
 html.embed { font-size: 16px; }
 

@@ -8,6 +8,7 @@ Live status boards for Summit at Snoqualmie, served by GitHub Pages from `main`:
 | `index.html` | `/trailliftstatus/` | Summit Central trails, Beginner → Expert then A–Z: open / closed / on hold, groomed |
 | `lifts.html` | `/trailliftstatus/lifts.html` | Summit Central lifts and their status |
 | `forecast.html` | `/trailliftstatus/forecast.html` | NWS Forecast (NWS only): active watches/warnings for the pass, new snow 24h/48h and snow level, next 6 periods with NWS's detailed descriptions |
+| `hourly.html` | `/trailliftstatus/hourly.html` | NWS Hourly: next 48 hours as small charts on one time axis (temperature with freezing line, precip chance, new snow per 6h, snow level with the pass elevation, wind and gusts) plus a summary; hover and a table view in embeds |
 | `discussion.html` | `/trailliftstatus/discussion.html` | NWS Forecast Discussion (Seattle office): synopsis, short term, long term. Covers western WA, not just the pass |
 | `avalanche.html` | `/trailliftstatus/avalanche.html` | NWAC Avalanche Forecast for Snoqualmie Pass: danger by elevation band, bottom line, problems, discussion; NWAC's seasonal statement between seasons |
 | `pass.html` | `/trailliftstatus/pass.html` | I-90 Overview: highway strip, chosen WSDOT cams west to east with which way each looks, short EB/WB restriction chips |
@@ -53,7 +54,7 @@ To test locally, run `python3 -m http.server 8080` and open
 ## Weather sources, one per page
 
 Each weather page shows a single source, so it's always clear whose forecast you're reading:
-NWS (`forecast.html`, `discussion.html`), NWAC (`avalanche.html`), WSDOT (`conditions.html`), and the
+NWS (`forecast.html`, `hourly.html`, `discussion.html`), NWAC (`avalanche.html`), WSDOT (`conditions.html`), and the
 resort feed (`weather.html`, Snow Conditions). NWS and NWAC are read straight from their public APIs
 (no key, no worker). Long NWAC text is cut at whole paragraphs on signage; embeds show all of it.
 
