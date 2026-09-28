@@ -1,0 +1,50 @@
+/* Shared I-90 styles for pass.html and conditions.html. */
+
+.cam {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3em;
+  min-width: 0;
+  min-height: 0;
+  padding: 0.4em;
+  border-radius: 0.5rem;
+  background: #1f2933;
+  color: #fff;
+  font-size: 0.85rem;
+}
+.cam .label { display: flex; align-items: center; gap: 0.4em; font-size: 0.8rem; font-weight: bold; }
+.cam .label .mp { margin-left: auto; font-weight: normal; opacity: 0.75; white-space: nowrap; }
+.cam img {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  object-fit: contain;
+  background: #000;
+  border-radius: 0.3rem;
+}
+html.embed .cam img { flex: none; aspect-ratio: 320 / 201; }
+.cam.stale img { opacity: 0.5; }
+
+.num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5em;
+  height: 1.5em;
+  flex: none;
+  border-radius: 50%;
+  background: #1565c0;
+  color: #fff;
+  font-size: 0.9em;
+}
+
+/* Which way the cam looks: → east, ← west, ⇄ both. */
+.facing {
+  flex: none;
+  padding: 0 0.35em;
+  border-radius: 0.3em;
+  background: #fbc02d;
+  color: #222;
+  font-size: 1.1em;
+  line-height: 1.3;
+}

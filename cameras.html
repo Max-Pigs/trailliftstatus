@@ -27,9 +27,10 @@
     label.cam { display: flex; align-items: center; gap: 8px; padding: 5px 4px; border-radius: 4px; cursor: pointer; font-size: 14px; }
     label.cam:hover { background: #f0f4f8; }
     label.cam .mp { margin-left: auto; color: #777; font-size: 12px; }
+    label.cam select { font-size: 12px; }
 
     .output { margin-top: 16px; padding: 10px; background: #f4f4f4; border-radius: 6px; font-size: 13px; }
-    .output code { display: block; margin: 6px 0; word-break: break-all; }
+    .output code { display: block; margin: 6px 0; white-space: pre-wrap; word-break: break-all; }
     button { font: inherit; padding: 6px 12px; border: 1px solid #888; border-radius: 4px; background: #fff; cursor: pointer; }
 
     .popup img { display: block; width: 280px; max-width: 70vw; height: auto; margin-top: 6px; border-radius: 4px; }
@@ -41,7 +42,7 @@
     <div id="map"></div>
     <aside>
       <h1>I-90 cameras</h1>
-      <p class="hint">Blue = shown on the I-90 Pass page. Click a marker for its live image. Tick cams to build a new list, then copy it into <code>cameras.js</code> (or send it to Claude).</p>
+      <p class="hint">Blue = shown on the I-90 Overview. Click a marker for its live image. Tick cams and set which way each one looks, then copy the result into <code>cameras.js</code> (or send it to Claude).</p>
       <div id="list">Loading cameras...</div>
       <div class="output">
         <b>Your selection</b>
@@ -56,6 +57,8 @@
     const HIDDEN_SEGMENTS = ["Easton to Cle Elum"];
 
     const selected = new Set(SHOWN_CAMERAS);
+    const facing = { ...CAMERA_FACING };
+    const FACING_OPTIONS = [["", "Facing?"], ["E", "→ East"], ["W", "← West"], ["both", "⇄ Both"]];
     const markers = new Map();
     const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
@@ -73,7 +76,10 @@
 
     function updateSelection() {
       const ids = [...selected].sort((a, b) => a - b);
-      document.getElementById("selection").textContent = `const SHOWN_CAMERAS = [${ids.join(", ")}];`;
+      const facingLines = Object.entries(facing).filter(([, v]) => v)
+        .sort(([a], [b]) => a - b).map(([id, v]) => `  ${id}: "${v}",`).join("\n");
+      document.getElementById("selection").textContent =
+        `const SHOWN_CAMERAS = [${ids.join(", ")}];\n\nconst CAMERA_FACING = {\n${facingLines}${facingLines ? "\n" : ""}};`;
       for (const [id, m] of markers) {
         m.setStyle(styleFor(id));
         if (selected.has(id)) m.bringToFront();
@@ -116,7 +122,17 @@
           <label class="cam">
             <input type="checkbox" data-id="${c.id}">
             <span>${esc(c.name)}</span><span class="mp">MP ${c.milepost}</span>
+            <select data-facing="${c.id}" aria-label="Which way ${esc(c.name)} looks">
+              ${FACING_OPTIONS.map(([v, t]) => `<option value="${v}" ${String(facing[c.id] ?? "") === v ? "selected" : ""}>${t}</option>`).join("")}
+            </select>
           </label>`).join("")}`).join("");
+
+      document.querySelectorAll("select[data-facing]").forEach((sel) => {
+        sel.addEventListener("change", () => {
+          sel.value ? (facing[sel.dataset.facing] = sel.value) : delete facing[sel.dataset.facing];
+          updateSelection();
+        });
+      });
 
       document.querySelectorAll("input[data-id]").forEach((box) => {
         box.addEventListener("change", () => toggle(Number(box.dataset.id), box.checked));

@@ -2,6 +2,8 @@
 // Data comes from the Cloudflare worker, which proxies the Summit at Snoqualmie feed.
 
 const API_URL = "https://snoq.max-4f5.workers.dev/";
+// WSDOT pass report, alerts and travel times via worker/wsdot.js (holds the access code).
+const WSDOT_WORKER_URL = "https://wsdot.max-4f5.workers.dev/";
 const REFRESH_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 
 // ?embed switches to the embed styles in common.css. Inside an iframe, the page
@@ -9,12 +11,13 @@ const REFRESH_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 const EMBED = new URLSearchParams(location.search).has("embed");
 if (EMBED) document.documentElement.classList.add("embed");
 
+let postedHeight = null;
 function postHeight() {
   if (window.parent === window) return;
-  window.parent.postMessage(
-    { source: "trailliftstatus", height: document.body.scrollHeight },
-    "*"
-  );
+  const height = document.body.scrollHeight;
+  if (height === postedHeight) return;
+  postedHeight = height;
+  window.parent.postMessage({ source: "trailliftstatus", height }, "*");
 }
 
 // Signage: no one can scroll a Yodeck screen, so shrink the root font size
@@ -46,6 +49,9 @@ if (EMBED) {
   document.addEventListener("DOMContentLoaded", () => {
     new ResizeObserver(postHeight).observe(document.body);
   });
+  // Backstop for late changes the observer misses (e.g. slow third-party icons);
+  // postHeight only sends when the height actually changed.
+  setInterval(postHeight, 1000);
 }
 
 // The feed returns a bare object instead of a one-item array in some places.

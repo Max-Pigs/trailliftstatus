@@ -8,7 +8,8 @@ Live status boards for Summit at Snoqualmie, served by GitHub Pages from `main`:
 | `index.html` | `/trailliftstatus/` | Summit Central trails, Beginner → Expert then A–Z: open / closed / on hold, groomed |
 | `lifts.html` | `/trailliftstatus/lifts.html` | Summit Central lifts and their status |
 | `forecast.html` | `/trailliftstatus/forecast.html` | Snoqualmie Pass forecast (NWS): next 6 periods, new snow 24h/48h, snow level, plus NWAC avalanche danger |
-| `pass.html` | `/trailliftstatus/pass.html` | I-90 Snoqualmie Pass: highway strip, chosen WSDOT cams west to east (refresh every minute), eastbound/westbound restrictions |
+| `pass.html` | `/trailliftstatus/pass.html` | I-90 Overview: highway strip, chosen WSDOT cams west to east with which way each looks, short EB/WB restriction chips |
+| `conditions.html` | `/trailliftstatus/conditions.html` | Snoqualmie Pass Conditions: full EB/WB restrictions, WSDOT road and weather report, travel time vs normal, I-90 alerts, 2 featured cams |
 | `cameras.html` | `/trailliftstatus/cameras.html` | Not for signage: a map of the I-90 cams for choosing which ones `pass.html` shows |
 | `weather.html` | `/trailliftstatus/weather.html` | Snow Conditions: base depth, 24h snow and surface for each base area |
 
@@ -62,16 +63,24 @@ To show a different area, change `AREA` near the top of the script in `index.htm
 
 ## I-90 cameras and road report
 
-- **Which cams show:** `cameras.js` lists camera ids. Open `cameras.html`, tick cams on the map or list,
-  press Copy, and paste over the `SHOWN_CAMERAS` line in `cameras.js`. The page sorts them west to east
-  and picks the column count that makes the images largest.
+- **Which cams show, and which way they look:** open `cameras.html`, tick cams and set each one's
+  facing (→ East, ← West, ⇄ Both), press Copy, and paste over `SHOWN_CAMERAS` and `CAMERA_FACING`
+  in `cameras.js`. WSDOT's data doesn't say which way cams face, so this is ours to keep.
+  The overview sorts cams west to east and picks the column count that makes the images largest.
+- **Featured cams** on the conditions page: `FEATURED_CAMERAS` in `cameras.js`.
 - **Camera catalog:** `data/i90-cameras.json` holds every active I-90 cam from North Bend to
   Ellensburg (name, milepost, location, image URL). Refresh it when WSDOT adds cams:
   `WSDOT_ACCESS_CODE=... python3 scripts/update_cameras.py`, then commit the JSON.
-- **Road report:** WSDOT needs an access code and blocks browser requests, so `pass.html` reads it
-  through a separate Cloudflare worker, `worker/wsdot.js`. Setup steps are at the top of that file.
-  Then put the worker's URL in `WSDOT_WORKER_URL` in `pass.html`. Until then the page shows cams only.
-  Never commit the access code; it lives only in the worker's secret.
+- **Road report, alerts, travel times:** WSDOT needs an access code and blocks browser requests, so
+  the pages read it through a separate Cloudflare worker, `worker/wsdot.js`, deployed at
+  `https://wsdot.max-4f5.workers.dev/` (`WSDOT_WORKER_URL` in `common.js`). Setup and update steps are
+  at the top of that file. Never commit the access code; it lives only in the worker's secret.
+
+## Split screens
+
+Every page fits whatever box it's given, so Yodeck multi-zone layouts work. Checked at full screen,
+half width (960×1080) and half height (1920×540). Text shrinks to fit, so busy pages in small zones
+(e.g. conditions on a winter day at half height) get small; give those a bigger zone.
 
 ## Editing
 
