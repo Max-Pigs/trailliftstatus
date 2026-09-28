@@ -1,49 +1,132 @@
-/* Shared styles for the trail, lift and weather pages. */
+/* Shared styles for the trail, lift and weather pages.
+ *
+ * Two modes:
+ * - Signage (default): Yodeck screens, landscape or portrait. The page fills the
+ *   screen with no scrolling; common.js shrinks the root font size until it fits.
+ *   Each page sets --cols (landscape) and --cols-portrait on its panel.
+ * - Embed (?embed, e.g. Knack): normal page flow, sized to content, no title.
+ * All sizes are in rem/em so they scale with the root font size.
+ */
 
 *, *::before, *::after { box-sizing: border-box; }
 
+html { font-size: 3.4vmin; }          /* signage starting size; fitToScreen shrinks it */
+html.embed { font-size: 16px; }
+
 body {
   margin: 0;
-  padding: 10px;
   font-family: Arial, sans-serif;
-  text-align: center;
+  color: #222;
   background-color: #f4f4f4;
 }
 
-.panel {
-  display: grid;
-  gap: 8px;
-  padding: 10px;
-  background: #fff;
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
+html:not(.embed) body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  height: 100vh;
+  padding: 0.8rem;
+  overflow: hidden;
 }
 
-/* ?embed (e.g. an iframe in Knack): blend into the host page. */
-html.embed body { background: transparent; padding: 0; }
-html.embed .panel { box-shadow: none; background: transparent; padding: 0; }
+html.embed body { display: flex; flex-direction: column; gap: 0.5rem; background: transparent; }
 
-.message { margin: 0; }
-.message.error { color: #b00020; }
+/* ===== Header: title, resort banner, summary ===== */
 
-/* Resort-status banner and "Updated" footer span the whole panel grid. */
-.banner, .updated { grid-column: 1 / -1; }
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem 1rem;
+}
+
+h1 { margin: 0; font-size: 1.6rem; }
+html.embed h1 { display: none; }
+
+.page-status { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; }
+.page-status:empty { display: none; }
+
+.summary { font-size: 1.3rem; font-weight: bold; }
+
 .banner {
-  padding: 10px;
-  border-radius: 8px;
-  font-size: clamp(16px, 2.2vw, 28px);
+  padding: 0.3em 0.8em;
+  border-radius: 0.4rem;
+  font-size: 1.2rem;
   font-weight: bold;
 }
-.updated {
-  margin: 4px 0 0;
-  font-size: clamp(12px, 1.2vw, 16px);
-  color: #666;
+
+/* ===== Panel: the grid of tiles ===== */
+
+.panel {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.6rem;
+  background: #fff;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+  border-radius: 0.5rem;
 }
 
-/* Status colors, keyed off the API's status text ("On Hold" -> .on-hold). */
+html:not(.embed) .panel {
+  flex: 1;
+  min-height: 0;
+  grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+}
+
+@media (orientation: portrait) {
+  html:not(.embed) .panel { grid-template-columns: repeat(var(--cols-portrait, 2), minmax(0, 1fr)); }
+}
+
+html.embed .panel {
+  grid-template-columns: repeat(auto-fill, minmax(var(--embed-min-col, 180px), 1fr));
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.message { margin: 0; font-size: 1.1rem; }
+.message.error { color: #b00020; }
+
+/* ===== Tiles ===== */
+
+.tile {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  min-width: 0;
+  padding: 0.5em 0.7em;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: bold;
+  line-height: 1.15;
+}
+
+.icon { width: 1em; height: 1em; flex: none; object-fit: contain; }
+
+/* ✓ / ✕ / ‖ so status doesn't depend on telling red from green. */
+.mark { margin-left: auto; flex: none; font-size: 1.1em; }
+
+/* ===== Footer: legend + updated time ===== */
+
+.page-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.3rem 1rem;
+  font-size: 0.8rem;
+  color: #555;
+}
+
+.legend { display: flex; flex-wrap: wrap; gap: 0.3rem 1rem; }
+.legend span { display: inline-flex; align-items: center; gap: 0.3em; }
+
+/* ===== Status colors, keyed off the API's status text ("On Hold" -> .on-hold). ===== */
+
 .open      { background: #d4edda; color: #155724; }
 .closed    { background: #f8d7da; color: #721c24; }
 .on-hold   { background: #fff3cd; color: #856404; }
 .delayed   { background: #ffeeba; color: #856404; }
 .scheduled { background: #d1ecf1; color: #0c5460; }
-.unknown   { background: #e2e3e5; color: #6c757d; }
+.unknown   { background: #e2e3e5; color: #495057; }

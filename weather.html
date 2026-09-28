@@ -7,41 +7,38 @@
   <link rel="stylesheet" href="common.css">
   <script src="common.js"></script>
   <style>
-    body { padding: 15px; }
-
-    #weatherStatus {
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 10px;
-      max-width: 800px;
-      margin: auto;
-    }
+    #weatherStatus { --cols: 3; --cols-portrait: 2; --embed-min-col: 200px; }
 
     .weather-entry {
-      padding: 12px;
-      border-radius: 8px;
+      padding: 0.6em 0.8em;
+      border-radius: 0.5rem;
       background: #e3f2fd;
-      box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
-      font-size: 16px;
-      text-align: left;
+      font-size: 1.1rem;
     }
+    html.embed .weather-entry { font-size: 1rem; }
 
-    .weather-entry h3 { margin: 0 0 5px; font-size: 18px; }
-    .weather-entry p { margin: 4px 0; }
+    .weather-entry h3 { margin: 0 0 0.3em; font-size: 1.2em; }
+    .weather-entry p { margin: 0.2em 0; }
     .label { font-weight: bold; }
 
     /* Resort closed: the feed keeps the last numbers it had, which can be months old. */
     .stale .weather-entry { opacity: 0.6; }
-    .stale-note { grid-column: 1 / -1; margin: 0; font-style: italic; color: #555; }
-
-    @media (max-width: 600px) {
-      body { padding: 5px; }
-      .weather-entry { padding: 8px; font-size: 14px; }
-      .weather-entry h3 { font-size: 16px; }
-    }
+    .stale-note { grid-column: 1 / -1; margin: 0; font-style: italic; color: #555; font-size: 0.9rem; }
+    html:not(.embed) .stale { grid-template-rows: auto; }  /* note row hugs its text */
   </style>
 </head>
 <body>
+  <header class="page-head">
+    <h1>Summit at Snoqualmie Weather</h1>
+    <div class="page-status"></div>
+  </header>
+
   <div id="weatherStatus" class="panel">Loading weather data...</div>
+
+  <footer class="page-foot">
+    <span></span>
+    <span class="updated"></span>
+  </footer>
 
   <script>
     const inches = (m) => (m?.inches != null ? `${m.inches} inches` : "N/A");

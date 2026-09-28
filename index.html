@@ -7,74 +7,54 @@
   <link rel="stylesheet" href="common.css">
   <script src="common.js"></script>
   <style>
-    body { padding: 0; }
-
-    #trailStatus {
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 10px;
-      align-content: start;
-      padding: 2vw;
-      border-radius: 0;
-    }
-
-    /* Signage fills the screen; an embed sizes to its content. */
-    html:not(.embed) #trailStatus { min-height: 100vh; }
-
-    .trail {
-      display: flex;
-      align-items: center;
-      gap: 0.4em;
-      min-height: 55px;
-      padding: 12px;
-      border-radius: 8px;
-      font-size: clamp(14px, 2vw, 24px);
-      font-weight: bold;
-      text-align: left;
-    }
-
-    .trail .name { flex: 1; }
-
-    .icon {
-      width: clamp(14px, 2vw, 24px);
-      height: auto;
-      flex: none;
-    }
-
-    @media (max-width: 480px) {
-      #trailStatus { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
-    }
+    #trailStatus { --cols: 5; --cols-portrait: 3; --embed-min-col: 180px; }
   </style>
 </head>
 <body>
+  <header class="page-head">
+    <h1>Summit Central Trails</h1>
+    <div class="page-status"></div>
+  </header>
+
   <div id="trailStatus" class="panel">Loading trail data...</div>
+
+  <footer class="page-foot">
+    <div class="legend"></div>
+    <span class="updated"></span>
+  </footer>
 
   <script>
     const AREA = "Summit Central";
 
     // The feed uses "novice" for green runs; our icon for that is Beginner.png.
-    const DIFFICULTY_ICONS = {
-      novice: "Beginner.png",
-      beginner: "Beginner.png",
-      intermediate: "Intermediate.png",
-      advanced: "Advanced.png",
-      expert: "Expert.png",
-    };
+    const DIFFICULTIES = [
+      { keys: ["novice", "beginner"], icon: "Beginner.png", label: "Beginner" },
+      { keys: ["intermediate"], icon: "Intermediate.png", label: "Intermediate" },
+      { keys: ["advanced"], icon: "Advanced.png", label: "Advanced" },
+      { keys: ["expert"], icon: "Expert.png", label: "Expert" },
+    ];
+    const difficultyOf = (trail) =>
+      DIFFICULTIES.find((d) => d.keys.includes(String(trail.difficulty ?? "").toLowerCase()));
+
+    const img = (src, alt) => `<img class="icon" src="${src}" alt="${escapeHtml(alt)}">`;
 
     function renderTrail(trail) {
-      const difficulty = String(trail.difficulty ?? "").toLowerCase();
-      const icon = DIFFICULTY_ICONS[difficulty];
-      const difficultyIcon = icon
-        ? `<img class="icon" src="${icon}" alt="${escapeHtml(difficulty)}">`
-        : `<span class="icon"></span>`;
-      const groomedIcon = trail.groomed === true
-        ? `<img class="icon" src="Groomed.png" alt="Groomed">`
-        : "";
-
-      return `<div class="trail ${statusClass(trail.status)}">
-        ${difficultyIcon}
+      const d = difficultyOf(trail);
+      return `<div class="tile trail ${statusClass(trail.status)}">
+        ${d ? img(d.icon, d.label) : `<span class="icon"></span>`}
         <span class="name">${escapeHtml(trail.name)}</span>
-        ${groomedIcon}
+        ${trail.groomed === true ? img("Groomed.png", "Groomed") : ""}
+        ${statusMark(trail.status)}
       </div>`;
+    }
+
+    // Key for the difficulties on this board, plus groomed and the status marks.
+    function renderLegend(trails) {
+      const shown = DIFFICULTIES.filter((d) => trails.some((t) => difficultyOf(t) === d));
+      document.querySelector(".legend").innerHTML =
+        shown.map((d) => `<span>${img(d.icon, "")} ${d.label}</span>`).join("") +
+        `<span>${img("Groomed.png", "")} Groomed</span>` +
+        `<span>✓ Open</span><span>✕ Closed</span><span>‖ On hold</span>`;
     }
 
     startPage("trailStatus", (el, data) => {
@@ -85,6 +65,8 @@
       if (!trails.length) return showMessage(el, "No trail data available.");
 
       el.innerHTML = trails.map(renderTrail).join("");
+      renderLegend(trails);
+      return `${trails.filter(isOpen).length} of ${trails.length} trails open`;
     }, (data) => data?.trailsUpdated);
   </script>
 </body>

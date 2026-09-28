@@ -9,7 +9,15 @@ Live status boards for Summit at Snoqualmie, served by GitHub Pages from `main`:
 | `lifts.html` | `/trailliftstatus/lifts.html` | Summit Central lifts and their status |
 | `weather.html` | `/trailliftstatus/weather.html` | Base depth, 24h snow and surface for each base area |
 
-The same pages run on the digital signage screens and embed in the Knack app.
+The same pages run on the digital signage screens (Yodeck, portrait or landscape)
+and embed in the Knack app.
+
+## Signage (Yodeck)
+
+Use the plain URLs. Each page fills the screen with no scrolling, picks columns for
+portrait or landscape, and shrinks its text only when the content wouldn't otherwise fit
+(for example, a long trail name or more trails than usual). Checked at 1920×1080 and 1080×1920.
+Column counts are the `--cols` / `--cols-portrait` values at the top of each page.
 
 Every page refreshes itself every 5 minutes. If a refresh fails, the last good data stays on screen.
 

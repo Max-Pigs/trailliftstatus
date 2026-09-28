@@ -7,59 +7,49 @@
   <link rel="stylesheet" href="common.css">
   <script src="common.js"></script>
   <style>
-    #liftStatus {
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      max-width: 95vw;
-      margin: 0 auto;
-    }
+    #liftStatus { --cols: 4; --cols-portrait: 2; --embed-min-col: 160px; }
 
     .lift {
-      display: flex;
-      align-items: center;
+      flex-direction: column;
       justify-content: center;
-      min-height: 44px;
-      padding: 10px;
-      border-radius: 8px;
-      font-size: 18px;
-      font-weight: bold;
-      line-height: 1.1;
+      gap: 0.2em;
+      text-align: center;
+      font-size: 1.4rem;
     }
-
-    .lift-type {
-      margin-left: 8px;
-      font-size: 14px;
-      font-weight: normal;
-      color: #333;
-      white-space: nowrap;
-    }
-
-    @media (max-width: 600px) {
-      #liftStatus { grid-template-columns: 1fr; max-width: 90vw; }
-      .lift { font-size: 16px; padding: 8px; min-height: 40px; }
-    }
-    @media (max-width: 400px) {
-      .lift { font-size: 14px; padding: 6px; }
-      .lift-type { display: none; }
-    }
+    .lift .meta { font-size: 0.65em; font-weight: normal; }
+    html.embed .lift { font-size: 1.1rem; }
   </style>
 </head>
 <body>
+  <header class="page-head">
+    <h1>Summit Central Lifts</h1>
+    <div class="page-status"></div>
+  </header>
+
   <div id="liftStatus" class="panel">Loading lift data...</div>
+
+  <footer class="page-foot">
+    <span></span>
+    <span class="updated"></span>
+  </footer>
 
   <script>
     const AREA = "Summit Central";
 
-    // "chairlift-4" -> "(4-seat)"
-    const liftTypeLabel = (liftIcon) => {
-      const m = String(liftIcon ?? "").match(/chairlift-(\d+)/i);
-      return m ? `(${m[1]}-seat)` : "";
-    };
+    // "chairlift-4" -> "4-seat chair", "magic-carpet" -> "Carpet"
+    function liftTypeLabel(liftIcon) {
+      const icon = String(liftIcon ?? "");
+      const m = icon.match(/chairlift-(\d+)/i);
+      if (m) return `${m[1]}-seat chair`;
+      if (/carpet/i.test(icon)) return "Carpet";
+      return "";
+    }
 
     function renderLift(lift) {
-      const type = liftTypeLabel(lift.liftIcon);
-      return `<div class="lift ${statusClass(lift.status)}">
-        ${escapeHtml(lift.name || "Unnamed Lift")}
-        ${type ? `<span class="lift-type">${type}</span>` : ""}
+      const meta = [lift.status || "Unknown", liftTypeLabel(lift.liftIcon)].filter(Boolean).join(" · ");
+      return `<div class="tile lift ${statusClass(lift.status)}">
+        <span class="name">${escapeHtml(lift.name || "Unnamed Lift")}</span>
+        <span class="meta">${escapeHtml(meta)}</span>
       </div>`;
     }
 
@@ -71,6 +61,7 @@
       if (!lifts.length) return showMessage(el, "No lift data available.");
 
       el.innerHTML = lifts.map(renderLift).join("");
+      return `${lifts.filter(isOpen).length} of ${lifts.length} lifts open`;
     }, (data) => data?.liftsUpdated);
   </script>
 </body>

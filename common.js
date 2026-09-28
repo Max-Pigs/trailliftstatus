@@ -17,10 +17,32 @@ function postHeight() {
   );
 }
 
+// Signage: no one can scroll a Yodeck screen, so shrink the root font size
+// (everything is in rem/em) until the panel's content fits the screen.
+function fitToScreen() {
+  const root = document.documentElement;
+  const panel = document.querySelector(".panel");
+  if (!panel) return;
+  root.style.fontSize = "";
+  let size = parseFloat(getComputedStyle(root).fontSize);
+  // Also check each tile, so a long word overflowing its tile counts as not fitting.
+  const tooBig = (el) => el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1;
+  const overflows = () => tooBig(panel) || [...panel.children].some(tooBig);
+  while (overflows() && size > 8) {
+    size *= 0.94;
+    root.style.fontSize = `${size}px`;
+  }
+}
+
+function afterRender() {
+  if (EMBED) postHeight();
+  else fitToScreen();
+}
+
+// startPage also calls afterRender after each render; these cover images and resizes.
+window.addEventListener("load", afterRender);
+window.addEventListener("resize", afterRender);
 if (EMBED) {
-  // startPage also posts after each render; these cover images and resizes.
-  window.addEventListener("load", postHeight);
-  window.addEventListener("resize", postHeight);
   document.addEventListener("DOMContentLoaded", () => {
     new ResizeObserver(postHeight).observe(document.body);
   });
@@ -35,8 +57,20 @@ const escapeHtml = (s) =>
   );
 
 // "On Hold" -> "on-hold"; matches the status classes in common.css.
-const statusClass = (status) =>
-  String(status ?? "").trim().toLowerCase().replace(/\s+/g, "-") || "unknown";
+// Anything we don't have a color for is grey rather than a blank white tile.
+const KNOWN_STATUSES = ["open", "closed", "on-hold", "delayed", "scheduled"];
+function statusClass(status) {
+  const s = String(status ?? "").trim().toLowerCase().replace(/\s+/g, "-");
+  return KNOWN_STATUSES.includes(s) ? s : "unknown";
+}
+
+const STATUS_MARKS = { open: "✓", closed: "✕", "on-hold": "‖", delayed: "‖" };
+function statusMark(status) {
+  const mark = STATUS_MARKS[statusClass(status)] ?? "•";
+  return `<span class="mark" title="${escapeHtml(status)}" aria-label="${escapeHtml(status)}">${mark}</span>`;
+}
+
+const isOpen = (item) => statusClass(item?.status) === "open";
 
 async function fetchResort() {
   const res = await fetch(API_URL, { cache: "no-store" });
@@ -68,18 +102,23 @@ function formatTime(iso) {
   });
 }
 
-// Banner (resort not open) and "Updated ..." line, as full-width rows of the panel grid.
-function addPageFrame(el, data, updatedAt) {
-  const status = resortStatus(data);
-  if (status && !resortIsOpen(data)) {
-    el.insertAdjacentHTML("afterbegin",
-      `<div class="banner ${statusClass(status)}">Resort ${escapeHtml(status.toLowerCase())}</div>`);
+// Fills the header's .page-status (resort banner + summary) and the footer's .updated.
+function renderPageFrame(data, summary, updatedAt) {
+  const statusEl = document.querySelector(".page-status");
+  if (statusEl) {
+    const status = resortStatus(data);
+    const banner = status && !resortIsOpen(data)
+      ? `<span class="banner ${statusClass(status)}">Resort ${escapeHtml(status.toLowerCase())}</span>`
+      : "";
+    statusEl.innerHTML = banner + (summary ? `<span class="summary">${escapeHtml(summary)}</span>` : "");
   }
+  const updatedEl = document.querySelector(".updated");
   const when = formatTime(updatedAt);
-  if (when) el.insertAdjacentHTML("beforeend", `<p class="updated">Updated ${escapeHtml(when)}</p>`);
+  if (updatedEl) updatedEl.textContent = when ? `Updated ${when}` : "";
 }
 
-// Loads now, then every REFRESH_INTERVAL_MS. `load` receives the resort data.
+// Loads now, then every REFRESH_INTERVAL_MS.
+// `load(el, data)` renders the panel and may return a summary line ("3 of 8 lifts open").
 // `updatedAt(data)` picks the feed timestamp shown in the footer.
 // A failed refresh keeps the last good render on screen instead of blanking it.
 function startPage(elementId, load, updatedAt = (data) => data?.updated) {
@@ -89,15 +128,14 @@ function startPage(elementId, load, updatedAt = (data) => data?.updated) {
   async function refresh() {
     try {
       const data = await fetchResort();
-      load(el, data);
-      addPageFrame(el, data, updatedAt(data));
+      const summary = load(el, data);
+      renderPageFrame(data, summary, updatedAt(data));
       hasRendered = true;
-      if (EMBED) postHeight();
     } catch (err) {
       console.error(`Error loading ${elementId}:`, err);
       if (!hasRendered) showMessage(el, "Error loading data. Retrying shortly.", true);
-      if (EMBED) postHeight();
     }
+    afterRender();
   }
 
   document.addEventListener("DOMContentLoaded", () => {
