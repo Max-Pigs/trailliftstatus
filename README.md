@@ -5,9 +5,9 @@ Live status boards for Summit at Snoqualmie, served by GitHub Pages from `main`:
 
 | Page | URL | Shows |
 | --- | --- | --- |
-| `index.html` | `/trailliftstatus/` | Summit Central trails: open / closed / on hold, difficulty icon, groomed icon |
+| `index.html` | `/trailliftstatus/` | Summit Central trails, Beginner → Expert then A–Z: open / closed / on hold, groomed |
 | `lifts.html` | `/trailliftstatus/lifts.html` | Summit Central lifts and their status |
-| `weather.html` | `/trailliftstatus/weather.html` | Base depth, 24h snow and surface for each base area |
+| `weather.html` | `/trailliftstatus/weather.html` | Snow Conditions: base depth, 24h snow and surface for each base area |
 
 The same pages run on the digital signage screens (Yodeck, portrait or landscape)
 and embed in the Knack app.

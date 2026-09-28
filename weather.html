@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Summit at Snoqualmie Weather</title>
+  <title>Snow Conditions</title>
   <link rel="stylesheet" href="common.css">
   <script src="common.js"></script>
   <style>
@@ -29,11 +29,11 @@
 </head>
 <body>
   <header class="page-head">
-    <h1>Summit at Snoqualmie Weather</h1>
+    <h1>Snow Conditions</h1>
     <div class="page-status"></div>
   </header>
 
-  <div id="weatherStatus" class="panel">Loading weather data...</div>
+  <div id="weatherStatus" class="panel">Loading snow conditions...</div>
 
   <footer class="page-foot">
     <span></span>
@@ -41,21 +41,25 @@
   </footer>
 
   <script>
-    const inches = (m) => (m?.inches != null ? `${m.inches} inches` : "N/A");
+    const inches = (m) => (m?.inches != null && m.inches !== "" ? `${m.inches} inches` : "");
 
+    // Rows with no value are left out rather than shown as "N/A".
     function renderLocation(loc) {
-      const surface = [loc.primarySurface, loc.secondarySurface].filter(Boolean).join(", ") || "N/A";
+      const rows = [
+        ["Base Depth", inches(loc.base)],
+        ["Snow (Last 24h)", inches(loc.snow24Hours)],
+        ["Surface", [loc.primarySurface, loc.secondarySurface].filter(Boolean).join(", ")],
+      ].filter(([, value]) => value);
       return `<div class="weather-entry">
         <h3>${escapeHtml(loc.name)}</h3>
-        <p><span class="label">Base Depth:</span> ${escapeHtml(inches(loc.base))}</p>
-        <p><span class="label">Snow (Last 24h):</span> ${escapeHtml(inches(loc.snow24Hours))}</p>
-        <p><span class="label">Surface:</span> ${escapeHtml(surface)}</p>
+        ${rows.map(([label, value]) =>
+          `<p><span class="label">${label}:</span> ${escapeHtml(value)}</p>`).join("")}
       </div>`;
     }
 
     startPage("weatherStatus", (el, data) => {
       const locations = toArray(data?.currentConditions?.resortLocations?.location);
-      if (!locations.length) return showMessage(el, "Weather data unavailable.");
+      if (!locations.length) return showMessage(el, "Snow conditions unavailable.");
 
       const stale = !resortIsOpen(data);
       el.classList.toggle("stale", stale);

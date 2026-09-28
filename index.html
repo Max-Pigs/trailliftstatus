@@ -64,6 +64,13 @@
       const trails = toArray(area.trails?.trail).filter((t) => t?.name);
       if (!trails.length) return showMessage(el, "No trail data available.");
 
+      // Beginner -> Expert (unknown difficulty last), then A-Z within each.
+      const rank = (t) => {
+        const r = DIFFICULTIES.indexOf(difficultyOf(t));
+        return r === -1 ? DIFFICULTIES.length : r;
+      };
+      trails.sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name));
+
       el.innerHTML = trails.map(renderTrail).join("");
       renderLegend(trails);
       return `${trails.filter(isOpen).length} of ${trails.length} trails open`;
