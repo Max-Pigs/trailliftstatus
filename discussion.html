@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NWS Forecast Discussion</title>
+  <link rel="stylesheet" href="common.css">
+  <script src="common.js"></script>
+  <script src="nws.js"></script>
+  <style>
+    /* Landscape: one column per section. Portrait and embed: stacked. */
+    #discussion { --cols: 3; --cols-portrait: 1; --embed-min-col: 100%; }
+    @media (orientation: portrait) {
+      html:not(.embed) #discussion { grid-auto-rows: auto; align-content: start; }
+    }
+    html.embed #discussion { grid-template-columns: 1fr; }
+
+    .section { display: flex; flex-direction: column; min-width: 0; min-height: 0; padding: 0.6em 0.8em; border-radius: 0.5rem; background: #f1f3f5; }
+    .section h2 { margin: 0 0 0.1em; font-size: 1rem; }
+    .section .span { margin: 0 0 0.5em; font-size: 0.75rem; color: #555; }
+    .section p { margin: 0 0 0.6em; font-size: 0.95rem; line-height: 1.35; }
+  </style>
+</head>
+<body>
+  <header class="page-head">
+    <h1>NWS Forecast Discussion · Seattle</h1>
+    <div class="page-status"></div>
+  </header>
+
+  <div id="discussion" class="panel">Loading forecast discussion...</div>
+
+  <footer class="page-foot">
+    <span>National Weather Service, Seattle · covers western Washington, not just the pass</span>
+    <span class="updated"></span>
+  </footer>
+
+  <script>
+    // The forecasters' write-up. Aviation, marine and the watch/warning list are left out.
+    const SECTIONS = ["SYNOPSIS", "SHORT TERM", "LONG TERM"];
+
+    async function fetchDiscussion() {
+      const list = await fetchJson(`https://api.weather.gov/products/types/AFD/locations/${NWS_OFFICE}`);
+      const latest = toArray(list?.["@graph"])[0];
+      if (!latest) throw new Error("No forecast discussion found");
+      return fetchJson(latest["@id"]);
+    }
+
+    // The product is fixed-width text: ".SHORT TERM /TONIGHT THROUGH TUESDAY NIGHT/..."
+    // starts a section, "&&" ends it, and lines are hard-wrapped at ~66 characters.
+    function parseSections(text) {
+      const HEADER = /^\.([A-Z][A-Z ]*?)\s*(?:\/([^/]*)\/)?\s*\.\.\.(.*)$/;
+      const out = [];
+      let current = null;
+      for (const line of String(text ?? "").split("\n")) {
+        const h = HEADER.exec(line.trim());
+        if (h) {
+          current = { name: h[1].trim(), span: (h[2] ?? "").trim(), lines: [h[3]] };
+          out.push(current);
+        } else if (line.trim() === "&&") {
+          current = null;
+        } else if (current) {
+          current.lines.push(line);
+        }
+      }
+      return out
+        .filter((s) => SECTIONS.includes(s.name))
+        .map((s) => ({
+          ...s,
+          paras: s.lines.join("\n").split(/\n\s*\n/)
+            .map((para) => para.replace(/\s*\n\s*/g, " ").trim())
+            .filter(Boolean),
+        }));
+    }
+
+    const titleCase = (s) => s.toLowerCase().replace(/^\w/, (c) => c.toUpperCase());
+
+    startPage("discussion", (el, product) => {
+      const sections = parseSections(product?.productText);
+      if (!sections.length) return showMessage(el, "Forecast discussion unavailable.");
+
+      el.innerHTML = sections.map((s) => `<div class="section">
+        <h2>${escapeHtml(titleCase(s.name))}</h2>
+        ${s.span ? `<p class="span">${escapeHtml(titleCase(s.span))}</p>` : ""}
+        ${s.paras.map((p) => `<p>${escapeHtml(p)}</p>`).join("")}
+      </div>`).join("");
+      return "";
+    }, (product) => product?.issuanceTime, fetchDiscussion);
+  </script>
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NWAC Avalanche Forecast · Snoqualmie Pass</title>
+  <link rel="stylesheet" href="common.css">
+  <script src="common.js"></script>
+  <style>
+    /* Landscape: danger by elevation on the left, the forecast text on the right.
+       Portrait and embed: stacked. */
+    html:not(.embed) #avalanche {
+      grid-template-columns: 2fr 3fr;
+      grid-template-rows: auto 1fr;
+      grid-template-areas: "danger bottom" "danger text";
+    }
+    @media (orientation: portrait) {
+      html:not(.embed) #avalanche {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto 1fr;
+        grid-template-areas: "danger" "bottom" "text";
+      }
+    }
+    html.embed #avalanche { grid-template-columns: 1fr; }
+    html.embed #avalanche > * { grid-area: auto; }
+
+    .danger { grid-area: danger; display: flex; flex-direction: column; gap: 0.4rem; min-height: 0; }
+    .bottom-line { grid-area: bottom; }
+    .avy-text { grid-area: text; min-height: 0; overflow: hidden; }
+
+    .band {
+      display: flex;
+      flex: 1;
+      align-items: center;
+      gap: 0.8em;
+      padding: 0.5em 0.9em;
+      border-radius: 0.5rem;
+      color: #fff;
+      background: #888;
+    }
+    .band .elev { font-size: 0.85rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.04em; }
+    .band .rating { margin-left: auto; font-size: 1.5rem; font-weight: bold; text-align: right; }
+
+    /* North American avalanche danger scale. */
+    .danger-1 { background: #50b848; }
+    .danger-2 { background: #fff200; color: #222; }
+    .danger-3 { background: #f7941e; color: #222; }
+    .danger-4 { background: #ed1c24; }
+    .danger-5 { background: #231f20; }
+
+    .section h2 { margin: 0 0 0.3em; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: #555; }
+    .bottom-line p { margin: 0; font-size: 1.1rem; font-weight: bold; line-height: 1.3; }
+    .avy-text p { margin: 0 0 0.5em; font-size: 0.85rem; line-height: 1.35; white-space: pre-line; }
+
+    .problems { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.6em; }
+    .problem { padding: 0.3em 0.7em; border-radius: 0.4rem; background: #e9ecef; font-size: 0.85rem; }
+    .problem b { display: block; }
+
+    .off-season { margin: 0; font-size: 0.85rem; color: #555; }
+  </style>
+</head>
+<body>
+  <header class="page-head">
+    <h1>NWAC Avalanche Forecast · Snoqualmie Pass</h1>
+    <div class="page-status"></div>
+  </header>
+
+  <div id="avalanche" class="panel">Loading avalanche forecast...</div>
+
+  <footer class="page-foot">
+    <span>Northwest Avalanche Center · nwac.us</span>
+    <span class="updated"></span>
+  </footer>
+
+  <script>
+    // NWAC's Snoqualmie Pass zone on avalanche.org. This returns the current product
+    // for the zone: the daily forecast in season, NWAC's seasonal statement otherwise.
+    const AVY_PRODUCT_URL = "https://api.avalanche.org/v2/public/product?type=forecast&center_id=NWAC&zone_id=3028";
+
+    const DANGER_NAMES = ["No rating", "Low", "Moderate", "Considerable", "High", "Extreme"];
+    const BANDS = [["upper", "Above treeline"], ["middle", "Near treeline"], ["lower", "Below treeline"]];
+
+    function renderDanger(product) {
+      const today = toArray(product.danger).find((d) => d.valid_day === "current");
+      return `<div class="danger">${BANDS.map(([key, label]) => {
+        const level = Number(today?.[key]);
+        const ok = level >= 1 && level <= 5;
+        return `<div class="band${ok ? ` danger-${level}` : ""}">
+          <span class="elev">${label}</span>
+          <span class="rating">${ok ? `${level} – ${DANGER_NAMES[level]}` : "No rating"}</span>
+        </div>`;
+      }).join("")}</div>`;
+    }
+
+    function renderProblems(product) {
+      const problems = toArray(product.forecast_avalanche_problems);
+      if (!problems.length) return "";
+      return `<div class="problems">${problems.map((p) => {
+        const size = toArray(p.size).join("–");
+        const detail = [p.likelihood, size && `size ${size}`].filter(Boolean).join(", ");
+        return `<span class="problem"><b>${escapeHtml(p.name)}</b>${escapeHtml(detail)}</span>`;
+      }).join("")}</div>`;
+    }
+
+    // Signage shows whole paragraphs up to about this many characters (NWAC's text runs
+    // ~2,000); embeds, which can scroll, get all of it.
+    const SIGNAGE_TEXT_CHARS = 900;
+
+    function paragraphs(text) {
+      const all = text.split(/\n{2,}/).map((t) => t.trim()).filter(Boolean);
+      let shown = all;
+      if (!EMBED) {
+        let used = 0;
+        shown = all.filter((t, i) => (used += t.length) <= SIGNAGE_TEXT_CHARS || i === 0);
+      }
+      const more = shown.length < all.length ? `<p class="off-season">Full text at nwac.us</p>` : "";
+      return shown.map((t) => `<p>${escapeHtml(t)}</p>`).join("") + more;
+    }
+
+    startPage("avalanche", (el, product) => {
+      const isForecast = product?.product_type === "forecast";
+      const bottom = htmlToText(product?.bottom_line);
+      const discussion = htmlToText(product?.hazard_discussion);
+
+      el.innerHTML =
+        renderDanger(product ?? {}) +
+        `<div class="section bottom-line"><h2>${isForecast ? "Bottom line" : "Between seasons"}</h2>
+          ${bottom ? `<p>${escapeHtml(bottom)}</p>`
+            : `<p class="off-season">NWAC isn't issuing daily forecasts for Snoqualmie Pass right now.</p>`}
+        </div>` +
+        `<div class="section avy-text">
+          ${isForecast ? renderProblems(product) : ""}
+          ${discussion ? `<h2>${isForecast ? "Discussion" : "NWAC statement"}</h2>${paragraphs(discussion)}` : ""}
+        </div>`;
+
+      // A forecast past its expiry (e.g. before today's is posted) must not look current.
+      const expires = formatTime(product?.expires_time);
+      if (!isForecast || !expires) return "";
+      return Date.parse(product.expires_time) < Date.now()
+        ? { statusHtml: `<span class="banner on-hold">Expired ${escapeHtml(expires)}. Check nwac.us for today's forecast</span>` }
+        : `Valid until ${expires}`;
+    }, (product) => product?.published_time, () => fetchJson(AVY_PRODUCT_URL));
+  </script>
+</body>
+</html>

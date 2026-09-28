@@ -7,7 +7,9 @@ Live status boards for Summit at Snoqualmie, served by GitHub Pages from `main`:
 | --- | --- | --- |
 | `index.html` | `/trailliftstatus/` | Summit Central trails, Beginner → Expert then A–Z: open / closed / on hold, groomed |
 | `lifts.html` | `/trailliftstatus/lifts.html` | Summit Central lifts and their status |
-| `forecast.html` | `/trailliftstatus/forecast.html` | Snoqualmie Pass forecast (NWS): next 6 periods, new snow 24h/48h, snow level, plus NWAC avalanche danger |
+| `forecast.html` | `/trailliftstatus/forecast.html` | NWS Forecast (NWS only): active watches/warnings for the pass, new snow 24h/48h and snow level, next 6 periods with NWS's detailed descriptions |
+| `discussion.html` | `/trailliftstatus/discussion.html` | NWS Forecast Discussion (Seattle office): synopsis, short term, long term. Covers western WA, not just the pass |
+| `avalanche.html` | `/trailliftstatus/avalanche.html` | NWAC Avalanche Forecast for Snoqualmie Pass: danger by elevation band, bottom line, problems, discussion; NWAC's seasonal statement between seasons |
 | `pass.html` | `/trailliftstatus/pass.html` | I-90 Overview: highway strip, chosen WSDOT cams west to east with which way each looks, short EB/WB restriction chips |
 | `conditions.html` | `/trailliftstatus/conditions.html` | Snoqualmie Pass Conditions: full EB/WB restrictions, WSDOT road and weather report, travel time vs normal, I-90 alerts, 2 featured cams |
 | `cameras.html` | `/trailliftstatus/cameras.html` | Not for signage: a map of the I-90 cams for choosing which ones `pass.html` shows |
@@ -47,6 +49,13 @@ Signage URLs stay as they are, without `?embed`.
 
 To test locally, run `python3 -m http.server 8080` and open
 <http://localhost:8080/knack/test.html>. It embeds all three pages the way Knack does.
+
+## Weather sources, one per page
+
+Each weather page shows a single source, so it's always clear whose forecast you're reading:
+NWS (`forecast.html`, `discussion.html`), NWAC (`avalanche.html`), WSDOT (`conditions.html`), and the
+resort feed (`weather.html`, Snow Conditions). NWS and NWAC are read straight from their public APIs
+(no key, no worker). Long NWAC text is cut at whole paragraphs on signage; embeds show all of it.
 
 ## How it works
 
