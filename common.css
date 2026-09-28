@@ -1,0 +1,35 @@
+/* Shared styles for the trail, lift and weather pages. */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 10px;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  background-color: #f4f4f4;
+}
+
+.panel {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  background: #fff;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+
+/* ?embed (e.g. an iframe in Knack): blend into the host page. */
+html.embed body { background: transparent; padding: 0; }
+html.embed .panel { box-shadow: none; background: transparent; padding: 0; }
+
+.message { margin: 0; }
+.message.error { color: #b00020; }
+
+/* Status colors, keyed off the API's status text ("On Hold" -> .on-hold). */
+.open      { background: #d4edda; color: #155724; }
+.closed    { background: #f8d7da; color: #721c24; }
+.on-hold   { background: #fff3cd; color: #856404; }
+.delayed   { background: #ffeeba; color: #856404; }
+.scheduled { background: #d1ecf1; color: #0c5460; }
+.unknown   { background: #e2e3e5; color: #6c757d; }

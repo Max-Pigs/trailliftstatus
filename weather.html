@@ -1,101 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Summit at Snoqualmie Weather</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            padding: 15px;
-            background-color: #f4f4f4;
-        }
-        #weather-status {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Responsive grid */
-            gap: 10px;
-            max-width: 800px;
-            margin: auto;
-            padding: 10px;
-            background: white;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            border-radius: 5px;
-        }
-        .weather-entry {
-            background: #e3f2fd;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 16px;
-            text-align: left;
-            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
-        }
-        .weather-entry h3 {
-            font-size: 18px;
-            margin-bottom: 5px;
-        }
-        .label {
-            font-weight: bold;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Summit at Snoqualmie Weather</title>
+  <link rel="stylesheet" href="common.css">
+  <script src="common.js"></script>
+  <style>
+    body { padding: 15px; }
 
-        /* Reduce padding & font size on smaller screens */
-        @media (max-width: 600px) {
-            body {
-                padding: 5px;
-            }
-            .weather-entry {
-                padding: 8px;
-                font-size: 14px;
-            }
-            .weather-entry h3 {
-                font-size: 16px;
-            }
-        }
-    </style>
+    #weatherStatus {
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 10px;
+      max-width: 800px;
+      margin: auto;
+    }
+
+    .weather-entry {
+      padding: 12px;
+      border-radius: 8px;
+      background: #e3f2fd;
+      box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+      font-size: 16px;
+      text-align: left;
+    }
+
+    .weather-entry h3 { margin: 0 0 5px; font-size: 18px; }
+    .weather-entry p { margin: 4px 0; }
+    .label { font-weight: bold; }
+
+    @media (max-width: 600px) {
+      body { padding: 5px; }
+      .weather-entry { padding: 8px; font-size: 14px; }
+      .weather-entry h3 { font-size: 16px; }
+    }
+  </style>
 </head>
 <body>
+  <div id="weatherStatus" class="panel">Loading weather data...</div>
 
-    <div id="weather-status">Loading weather data...</div>
+  <script>
+    const inches = (m) => (m?.inches != null ? `${m.inches} inches` : "N/A");
 
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const weatherDiv = document.getElementById("weather-status");
+    function renderLocation(loc) {
+      const surface = [loc.primarySurface, loc.secondarySurface].filter(Boolean).join(", ") || "N/A";
+      return `<div class="weather-entry">
+        <h3>${escapeHtml(loc.name)}</h3>
+        <p><span class="label">Base Depth:</span> ${escapeHtml(inches(loc.base))}</p>
+        <p><span class="label">Snow (Last 24h):</span> ${escapeHtml(inches(loc.snow24Hours))}</p>
+        <p><span class="label">Surface:</span> ${escapeHtml(surface)}</p>
+      </div>`;
+    }
 
-            fetch("https://snoq.max-4f5.workers.dev/")
-                .then(response => response.json())
-                .then(data => {
-                    if (!data.currentConditions || !data.currentConditions.resortLocations) {
-                        weatherDiv.textContent = "Weather data unavailable";
-                        return;
-                    }
+    startPage("weatherStatus", (el, data) => {
+      const locations = toArray(data?.currentConditions?.resortLocations?.location);
+      if (!locations.length) return showMessage(el, "Weather data unavailable.");
 
-                    const locations = data.currentConditions.resortLocations.location;
-                    let weatherHTML = "";
-
-                    locations.forEach(location => {
-                        const baseDepth = location.base ? `${location.base.inches} inches` : "N/A";
-                        const snow24h = location.snow24Hours ? `${location.snow24Hours.inches} inches` : "N/A";
-                        const surfaceCondition = location.primarySurface ? location.primarySurface : "N/A";
-                        const secondarySurface = location.secondarySurface ? location.secondarySurface : "N/A";
-                        
-                        weatherHTML += `
-                            <div class="weather-entry">
-                                <h3>${location.name}</h3>
-                                <p><span class="label">Base Depth:</span> ${baseDepth}</p>
-                                <p><span class="label">Snow (Last 24h):</span> ${snow24h}</p>
-                                <p><span class="label">Surface:</span> ${surfaceCondition}, ${secondarySurface}</p>
-                            </div>
-                        `;
-                    });
-
-                    weatherDiv.innerHTML = weatherHTML;
-                })
-                .catch(error => {
-                    console.error("Error fetching weather data:", error);
-                    weatherDiv.textContent = "Failed to load weather data.";
-                });
-        });
-    </script>
-
+      el.innerHTML = locations.map(renderLocation).join("");
+    });
+  </script>
 </body>
 </html>
