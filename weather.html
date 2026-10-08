@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Snow Conditions</title>
+  <title>Snow conditions</title>
   <link rel="stylesheet" href="common.css">
   <script src="common.js"></script>
   <style>
@@ -12,24 +12,24 @@
     .weather-entry {
       padding: 0.6em 0.8em;
       border-radius: 0.5rem;
-      background: #e3f2fd;
+      background: var(--color-surface-selected);
       font-size: 1.1rem;
     }
     html.embed .weather-entry { font-size: 1rem; }
 
-    .weather-entry h3 { margin: 0 0 0.3em; font-size: 1.2em; }
+    .weather-entry h3 { margin: 0 0 0.3em; font-size: 1.2em; color: var(--color-text-brand); }
     .weather-entry p { margin: 0.2em 0; }
-    .label { font-weight: bold; }
+    .label { font-weight: 700; }
 
     /* Resort closed: the feed keeps the last numbers it had, which can be months old. */
     .stale .weather-entry { opacity: 0.6; }
-    .stale-note { grid-column: 1 / -1; margin: 0; font-style: italic; color: #555; font-size: 0.9rem; }
+    .stale-note { grid-column: 1 / -1; margin: 0; font-style: italic; color: var(--color-text-secondary); font-size: 0.9rem; }
     html:not(.embed) .stale { grid-template-rows: auto; }  /* note row hugs its text */
   </style>
 </head>
 <body>
   <header class="page-head">
-    <h1>Snow Conditions</h1>
+    <h1>Snow conditions</h1>
     <div class="page-status"></div>
   </header>
 
@@ -46,8 +46,8 @@
     // Rows with no value are left out rather than shown as "N/A".
     function renderLocation(loc) {
       const rows = [
-        ["Base Depth", inches(loc.base)],
-        ["Snow (Last 24h)", inches(loc.snow24Hours)],
+        ["Base depth", inches(loc.base)],
+        ["Snow (last 24h)", inches(loc.snow24Hours)],
         ["Surface", [loc.primarySurface, loc.secondarySurface].filter(Boolean).join(", ")],
       ].filter(([, value]) => value);
       return `<div class="weather-entry">

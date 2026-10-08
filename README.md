@@ -66,6 +66,8 @@ in this repo.
 
 - `common.js`: the worker URL, refresh interval and shared helpers
 - `common.css`: page background, panel, status colors, and the embed styles
+- `brand.css`: Powderpigs colors and fonts, copied from the "Powderpigs Design System" project in Claude Design. Pages use its `--color-*` tokens; change colors there, not in each page
+- `assets/logo-pig.svg`: the pig logo shown before each page title
 - `knack/`: the Knack resize snippet and a local embed test page
 - `*.png`: difficulty and groomed icons. The feed calls green runs `novice`, which uses `Beginner.png`.
 

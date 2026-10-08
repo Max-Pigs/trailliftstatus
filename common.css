@@ -6,7 +6,10 @@
  *   Each page sets --cols (landscape) and --cols-portrait on its panel.
  * - Embed (?embed, e.g. Knack): normal page flow, sized to content, no title.
  * All sizes are in rem/em so they scale with the root font size.
+ * Colors and fonts come from brand.css (the Powderpigs design system).
  */
+
+@import url("brand.css");
 
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -19,9 +22,11 @@ html.embed { font-size: 16px; }
 
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
-  color: #222;
-  background-color: #f4f4f4;
+  font-family: var(--font-family-body);
+  line-height: var(--font-line-height-normal);
+  color: var(--color-text-primary);
+  background-color: var(--color-surface-page);
+  -webkit-font-smoothing: antialiased;
 }
 
 html:not(.embed) body {
@@ -35,7 +40,8 @@ html:not(.embed) body {
 
 html.embed body { display: flex; flex-direction: column; gap: 0.5rem; background: transparent; }
 
-/* ===== Header: title, resort banner, summary ===== */
+/* ===== Header: pig logo + title, resort banner, summary =====
+   Brand app header: a white bar with a thin gray line, no colored bar. */
 
 .page-head {
   display: flex;
@@ -43,32 +49,49 @@ html.embed body { display: flex; flex-direction: column; gap: 0.5rem; background
   align-items: center;
   justify-content: space-between;
   gap: 0.4rem 1rem;
+  padding: 0.4rem 0.8rem;
+  background: var(--color-surface-header);
+  border: 1px solid var(--color-border-default);
+  border-radius: 0.8rem;
 }
+html.embed .page-head { padding: 0; background: none; border: 0; border-radius: 0; }
 
-h1 { margin: 0; font-size: 1.6rem; }
+/* Page titles use the logo font, in navy. The logo comes from common.js. */
+h1 {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  margin: 0;
+  font-family: var(--font-family-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: var(--font-line-height-tight);
+  color: var(--color-text-brand);
+}
+h1 .logo { width: 1.5em; height: 1.5em; flex: none; }
 html.embed h1 { display: none; }
 
 .page-status { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; }
 .page-status:empty { display: none; }
 
-.summary { font-size: 1.3rem; font-weight: bold; }
+.summary { font-size: 1.3rem; font-weight: 700; color: var(--color-text-brand); }
 
 .banner {
   padding: 0.3em 0.8em;
-  border-radius: 0.4rem;
+  border-radius: 999px;
   font-size: 1.2rem;
-  font-weight: bold;
+  font-weight: 700;
 }
 
-/* ===== Panel: the grid of tiles ===== */
+/* ===== Panel: the grid of tiles. Brand rule: borders over shadows. ===== */
 
 .panel {
   display: grid;
   gap: 0.5rem;
   padding: 0.6rem;
-  background: #fff;
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
-  border-radius: 0.5rem;
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-border-default);
+  border-radius: 0.8rem;
 }
 
 html:not(.embed) .panel {
@@ -86,11 +109,11 @@ html.embed .panel {
   grid-template-columns: repeat(auto-fill, minmax(var(--embed-min-col, 180px), 1fr));
   padding: 0;
   background: transparent;
-  box-shadow: none;
+  border: 0;
 }
 
 .message { margin: 0; font-size: 1.1rem; }
-.message.error { color: #b00020; }
+.message.error { color: var(--color-status-danger); }
 
 /* ===== Tiles ===== */
 
@@ -102,7 +125,7 @@ html.embed .panel {
   padding: 0.5em 0.7em;
   border-radius: 0.5rem;
   font-size: 1rem;
-  font-weight: bold;
+  font-weight: 600;
   line-height: 1.15;
 }
 
@@ -120,17 +143,18 @@ html.embed .panel {
   justify-content: space-between;
   gap: 0.3rem 1rem;
   font-size: 0.8rem;
-  color: #555;
+  color: var(--color-text-secondary);
 }
 
 .legend { display: flex; flex-wrap: wrap; gap: 0.3rem 1rem; }
 .legend span { display: inline-flex; align-items: center; gap: 0.3em; }
 
-/* ===== Status colors, keyed off the API's status text ("On Hold" -> .on-hold). ===== */
+/* ===== Status colors, keyed off the API's status text ("On Hold" -> .on-hold).
+   Brand status tokens; the ✓ / ✕ / ‖ marks carry the meaning without color. ===== */
 
-.open      { background: #d4edda; color: #155724; }
-.closed    { background: #f8d7da; color: #721c24; }
-.on-hold   { background: #fff3cd; color: #856404; }
-.delayed   { background: #ffeeba; color: #856404; }
-.scheduled { background: #d1ecf1; color: #0c5460; }
-.unknown   { background: #e2e3e5; color: #495057; }
+.open      { background: var(--color-status-success-bg); color: var(--color-status-success); }
+.closed    { background: var(--color-status-danger-bg);  color: var(--color-status-danger); }
+.on-hold,
+.delayed   { background: var(--color-status-warning-bg); color: var(--color-status-warning); }
+.scheduled { background: var(--color-status-info-bg);    color: var(--color-status-info); }
+.unknown   { background: var(--color-surface-subtle);    color: var(--color-text-secondary); }

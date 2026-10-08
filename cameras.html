@@ -3,35 +3,37 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>I-90 Camera Picker</title>
+  <title>I-90 camera picker</title>
   <!-- Not a signage page: a map for choosing which cams pass.html shows. -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <link rel="stylesheet" href="brand.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
   <script src="cameras.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; }
-    body { margin: 0; font-family: Arial, sans-serif; color: #222; background: #f4f4f4; }
+    body { margin: 0; font-family: var(--font-family-body); color: var(--color-text-primary); background: var(--color-surface-page); }
 
     .layout { display: grid; grid-template-columns: 1fr 360px; height: 100vh; }
     #map { height: 100%; }
-    aside { overflow-y: auto; padding: 16px; background: #fff; border-left: 1px solid #ddd; }
+    aside { overflow-y: auto; padding: 16px; background: var(--color-surface-card); border-left: 1px solid var(--color-border-default); }
     @media (max-width: 800px) {
       .layout { grid-template-columns: 1fr; grid-template-rows: 55vh auto; height: auto; }
       aside { border-left: 0; }
     }
 
-    h1 { margin: 0 0 4px; font-size: 20px; }
-    .hint { margin: 0 0 12px; font-size: 13px; color: #555; }
-    h2 { margin: 16px 0 6px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.04em; color: #555; }
+    h1 { margin: 0 0 4px; font-family: var(--font-family-display); font-size: 24px; color: var(--color-text-brand); }
+    .hint { margin: 0 0 12px; font-size: 13px; color: var(--color-text-secondary); }
+    h2 { margin: 16px 0 6px; font-size: 15px; color: var(--color-text-brand); }
 
-    label.cam { display: flex; align-items: center; gap: 8px; padding: 5px 4px; border-radius: 4px; cursor: pointer; font-size: 14px; }
-    label.cam:hover { background: #f0f4f8; }
-    label.cam .mp { margin-left: auto; color: #777; font-size: 12px; }
+    label.cam { display: flex; align-items: center; gap: 8px; padding: 5px 4px; border-radius: 6px; cursor: pointer; font-size: 14px; }
+    label.cam:hover { background: var(--color-surface-selected); }
+    label.cam .mp { margin-left: auto; color: var(--color-text-secondary); font-size: 12px; }
     label.cam select { font-size: 12px; }
 
-    .output { margin-top: 16px; padding: 10px; background: #f4f4f4; border-radius: 6px; font-size: 13px; }
+    .output { margin-top: 16px; padding: 10px; background: var(--color-surface-subtle); border-radius: 10px; font-size: 13px; }
     .output code { display: block; margin: 6px 0; white-space: pre-wrap; word-break: break-all; }
-    button { font: inherit; padding: 6px 12px; border: 1px solid #888; border-radius: 4px; background: #fff; cursor: pointer; }
+    button { font: inherit; font-weight: 600; padding: 8px 16px; border: 0; border-radius: 10px; background: var(--color-action-primary); color: #fff; cursor: pointer; }
+    button:hover { background: var(--color-base-brand-navy-dark); }
 
     .popup img { display: block; width: 280px; max-width: 70vw; height: auto; margin-top: 6px; border-radius: 4px; }
     .popup b { font-size: 14px; }
@@ -42,7 +44,7 @@
     <div id="map"></div>
     <aside>
       <h1>I-90 cameras</h1>
-      <p class="hint">Blue = shown on the I-90 Overview. Click a marker for its live image. Tick cams and set which way each one looks, then copy the result into <code>cameras.js</code> (or send it to Claude).</p>
+      <p class="hint">Navy = shown on the I-90 overview. Click a marker for its live image. Tick cams and set which way each one looks, then copy the result into <code>cameras.js</code> (or send it to Claude).</p>
       <div id="list">Loading cameras...</div>
       <div class="output">
         <b>Your selection</b>
@@ -70,8 +72,8 @@
 
     function styleFor(id) {
       return selected.has(id)
-        ? { radius: 9, color: "#fff", weight: 2, fillColor: "#1565c0", fillOpacity: 1 }
-        : { radius: 6, color: "#fff", weight: 1.5, fillColor: "#888", fillOpacity: 0.9 };
+        ? { radius: 9, color: "#fff", weight: 2, fillColor: "#143157", fillOpacity: 1 }
+        : { radius: 6, color: "#fff", weight: 1.5, fillColor: "#9AA3AF", fillOpacity: 0.9 };
     }
 
     function updateSelection() {
@@ -96,7 +98,7 @@
       const cams = catalog.filter((c) => !HIDDEN_SEGMENTS.includes(c.segment) || selected.has(c.id));
 
       // Approximate I-90 by joining the cams west to east.
-      L.polyline(cams.map((c) => [c.lat, c.lon]), { color: "#c62828", weight: 3, opacity: 0.5 }).addTo(map);
+      L.polyline(cams.map((c) => [c.lat, c.lon]), { color: "#C01823", weight: 3, opacity: 0.5 }).addTo(map);
 
       for (const c of cams) {
         const m = L.circleMarker([c.lat, c.lon], styleFor(c.id)).addTo(map);

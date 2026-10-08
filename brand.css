@@ -1,0 +1,71 @@
+/* Powderpigs brand tokens, copied from the "Powderpigs Design System" project in Claude Design
+ * (tokens/colors.css, typography.css, spacing.css, fonts.css). Pages use the semantic
+ * --color-* tokens, not the --color-base-* values. Light only: these are signage screens.
+ * Update this file from the design project rather than editing values here.
+ */
+
+/* Avenir Next is built into Apple devices but not licensed as a webfont; elsewhere the
+   stack falls back to Nunito Sans. The logo font (Egyptienne MN Condensed) needs a
+   Mecanorma web licence before it can ship, so titles use it only where it's installed
+   locally and otherwise fall back to Roboto Slab. */
+@import url("https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&family=Roboto+Slab:wght@700&display=swap");
+@font-face { font-family: "Avenir Next"; src: local("Avenir Next Regular"), local("AvenirNext-Regular"); font-weight: 400; }
+@font-face { font-family: "Avenir Next"; src: local("Avenir Next Demi Bold"), local("AvenirNext-DemiBold"); font-weight: 600; }
+@font-face { font-family: "Avenir Next"; src: local("Avenir Next Bold"), local("AvenirNext-Bold"); font-weight: 700; }
+
+:root {
+  /* Base */
+  --color-base-brand-red: #C01823;
+  --color-base-brand-light-blue: #65B2E8;
+  --color-base-brand-light-blue-tint: #E8F3FC;
+  --color-base-brand-navy: #143157;
+  --color-base-brand-navy-dark: #0D2240;
+  --color-base-brand-black: #231F20;
+  --color-base-brand-white: #FFFFFF;
+  --color-base-brand-caution-yellow: #EEBA1D;
+  --color-base-neutral-0: #FFFFFF;
+  --color-base-neutral-50: #F7F8FA;
+  --color-base-neutral-100: #EEF0F3;
+  --color-base-neutral-200: #DDE1E7;
+  --color-base-neutral-400: #9AA3AF;
+  --color-base-neutral-500: #7A8390;
+  --color-base-neutral-600: #5B6573;
+  --color-base-green-100: #E3F4E8;
+  --color-base-green-700: #1E7A3C;
+  --color-base-amber-100: #FDF3D3;
+  --color-base-amber-700: #8A5A00;
+  --color-base-red-100: #FBE4E2;
+
+  /* Semantic */
+  --color-text-primary: var(--color-base-brand-black);
+  --color-text-secondary: var(--color-base-neutral-600);
+  --color-text-brand: var(--color-base-brand-navy);
+  --color-text-on-inverse: var(--color-base-brand-white);
+  --color-surface-page: var(--color-base-neutral-50);
+  --color-surface-card: var(--color-base-neutral-0);
+  --color-surface-subtle: var(--color-base-neutral-100);
+  --color-surface-selected: var(--color-base-brand-light-blue-tint);
+  --color-surface-highlight: var(--color-base-brand-light-blue);
+  --color-surface-inverse: var(--color-base-brand-black);
+  --color-surface-header: var(--color-base-neutral-0);
+  --color-surface-night: var(--color-base-brand-navy);
+  --color-border-default: var(--color-base-neutral-200);
+  --color-border-strong: var(--color-base-neutral-500);
+  --color-border-brand: var(--color-base-brand-red);
+  --color-action-primary: var(--color-base-brand-navy);
+  --color-status-success: var(--color-base-green-700);
+  --color-status-success-bg: var(--color-base-green-100);
+  --color-status-warning: var(--color-base-amber-700);
+  --color-status-warning-bg: var(--color-base-amber-100);
+  --color-status-danger: var(--color-base-brand-red);
+  --color-status-danger-bg: var(--color-base-red-100);
+  --color-status-info: var(--color-base-brand-navy);
+  --color-status-info-bg: var(--color-base-brand-light-blue-tint);
+  --color-safety-caution: var(--color-base-brand-caution-yellow);
+
+  /* Type */
+  --font-family-body: "Avenir Next", "Nunito Sans", -apple-system, system-ui, sans-serif;
+  --font-family-display: "Egyptienne MN Condensed", "Roboto Slab", Georgia, serif;
+  --font-line-height-tight: 1.2;
+  --font-line-height-normal: 1.45;
+}
