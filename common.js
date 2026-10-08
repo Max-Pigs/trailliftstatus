@@ -42,6 +42,12 @@ function afterRender() {
   else fitToScreen();
 }
 
+// Powderpigs pig logo in front of the page title (decorative; the title says what the page is).
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelector(".page-head h1")
+    ?.insertAdjacentHTML("afterbegin", `<img class="logo" src="assets/logo-pig.svg" alt="">`);
+});
+
 // startPage also calls afterRender after each render; these cover images and resizes.
 window.addEventListener("load", afterRender);
 window.addEventListener("resize", afterRender);

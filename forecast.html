@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NWS Forecast · Snoqualmie Pass</title>
+  <title>NWS forecast · Snoqualmie Pass</title>
   <link rel="stylesheet" href="common.css">
   <script src="common.js"></script>
   <script src="nws.js"></script>
@@ -19,9 +19,9 @@
     .alert { padding: 0.5em 0.8em; border-radius: 0.5rem; border-left: 0.4em solid; font-size: 0.9rem; }
     .alert .event { font-size: 1.15em; font-weight: bold; }
     .alert .when { font-size: 0.8em; opacity: 0.85; }
-    .alert.severe   { background: #f8d7da; color: #721c24; border-color: #c62828; }
-    .alert.moderate { background: #fff3cd; color: #6b4e00; border-color: #f9a825; }
-    .alert.minor    { background: #e2e3e5; color: #333;    border-color: #6c757d; }
+    .alert.severe   { background: var(--color-status-danger-bg);  color: var(--color-status-danger);  border-color: var(--color-status-danger); }
+    .alert.moderate { background: var(--color-status-warning-bg); color: var(--color-status-warning); border-color: var(--color-safety-caution); }
+    .alert.minor    { background: var(--color-surface-subtle);    color: var(--color-text-primary);   border-color: var(--color-border-strong); }
 
     .snow-strip {
       display: flex;
@@ -30,11 +30,11 @@
       gap: 0.3rem 1.5rem;
       padding: 0.4em 0.8em;
       border-radius: 0.5rem;
-      background: #f1f8fe;
+      background: var(--color-surface-subtle);
       font-size: 0.9rem;
     }
     .snow-strip b { font-size: 1.3em; }
-    .snow-strip .sub { font-size: 0.85em; color: #555; }
+    .snow-strip .sub { font-size: 0.85em; color: var(--color-text-secondary); }
 
     .period {
       display: flex;
@@ -43,20 +43,20 @@
       min-width: 0;
       padding: 0.6em 0.8em;
       border-radius: 0.5rem;
-      background: #e3f2fd;
+      background: var(--color-surface-selected);
       font-size: 0.9rem;
     }
-    .period.night { background: #e8eaf6; }
+    .period.night { background: var(--color-surface-subtle); }
     .period .top { display: flex; align-items: center; gap: 0.6em; }
     .period img { width: 3em; height: 3em; border-radius: 0.4rem; flex: none; }
-    .period h3 { margin: 0; font-size: 1.1em; }
-    .period .temp { margin-left: auto; font-size: 1.9em; font-weight: bold; line-height: 1; }
+    .period h3 { margin: 0; font-size: 1.1em; color: var(--color-text-brand); }
+    .period .temp { margin-left: auto; font-size: 1.9em; font-weight: 700; color: var(--color-text-brand); line-height: 1; }
     .period .detail { margin: 0; line-height: 1.3; }
   </style>
 </head>
 <body>
   <header class="page-head">
-    <h1>NWS Forecast · Snoqualmie Pass</h1>
+    <h1>NWS forecast · Snoqualmie Pass</h1>
     <div class="page-status"></div>
   </header>
 

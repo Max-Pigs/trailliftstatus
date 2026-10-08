@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NWS Hourly · Snoqualmie Pass</title>
+  <title>NWS hourly · Snoqualmie Pass</title>
   <link rel="stylesheet" href="common.css">
   <script src="common.js"></script>
   <script src="nws.js"></script>
@@ -12,9 +12,10 @@
     #hourly {
       --cols: 1; --cols-portrait: 1; --embed-min-col: 100%;
       position: relative;
-      --series-1: #2a78d6;  /* wind, and every single-series chart */
-      --series-2: #eb6834;  /* gusts */
-      --ink: #222; --ink-2: #555; --ink-3: #777; --grid: #e6e6e6; --grid-strong: #c9c9c9; --surface: #fff;
+      --series-1: var(--color-base-brand-navy);  /* wind, and every single-series chart */
+      --series-2: var(--color-base-brand-red);  /* gusts */
+      --ink: var(--color-text-primary); --ink-2: var(--color-text-secondary); --ink-3: var(--color-base-neutral-500);
+      --grid: var(--color-surface-subtle); --grid-strong: var(--color-border-default); --surface: var(--color-surface-card);
     }
     html.embed #hourly { grid-template-columns: 1fr; }
     /* Two columns of three (summary first) unless the screen is truly tall (narrower
@@ -26,13 +27,13 @@
     }
 
     .summary-card { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; align-content: center; }
-    .stat { padding: 0.4em 0.6em; border-radius: 0.5rem; background: #f1f3f5; }
+    .stat { padding: 0.4em 0.6em; border-radius: 0.5rem; background: var(--color-surface-subtle); }
     .stat .k { font-size: 0.7rem; color: var(--ink-2); }
-    .stat .v { font-size: 1.4rem; font-weight: bold; line-height: 1.15; }
+    .stat .v { font-size: 1.4rem; font-weight: 700; color: var(--color-text-brand); line-height: 1.15; }
 
     .chart { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
     .chart-head { display: flex; align-items: baseline; gap: 1em; font-size: 0.8rem; }
-    .chart-head h2 { margin: 0; font-size: 1em; }
+    .chart-head h2 { margin: 0; font-size: 1em; color: var(--color-text-brand); }
     .legend-key { display: inline-flex; align-items: center; gap: 0.35em; color: var(--ink-2); }
     .legend-key i { display: inline-block; width: 1.2em; height: 0.2em; border-radius: 1px; }
     .plot { position: relative; flex: 1; min-height: 0; overflow: hidden; }
@@ -42,7 +43,7 @@
     .tip {
       position: absolute; z-index: 2; pointer-events: none; display: none;
       padding: 0.5em 0.7em; border-radius: 0.4rem; background: #fff; color: var(--ink);
-      box-shadow: 0 2px 10px rgba(0,0,0,0.18); font-size: 13px; line-height: 1.45; white-space: nowrap;
+      box-shadow: 0 8px 24px -8px rgba(13,34,64,.28), 0 2px 6px rgba(13,34,64,.08); font-size: 13px; line-height: 1.45; white-space: nowrap;
     }
     .tip b { display: block; margin-bottom: 0.2em; }
     .tip .sw { display: inline-block; width: 0.7em; height: 0.7em; margin-right: 0.4em; border-radius: 2px; }
@@ -55,7 +56,7 @@
 </head>
 <body>
   <header class="page-head">
-    <h1>NWS Hourly · Snoqualmie Pass</h1>
+    <h1>NWS hourly · Snoqualmie Pass</h1>
     <div class="page-status"></div>
   </header>
 
